@@ -12,10 +12,10 @@
 using namespace std;
 
 Agent::Agent(int index,
-        float score,
+        double score,
         int tier,
         std::vector<int> partnerSideTierSizes,
-        std::vector<float> partnerSideScores,
+        std::vector<double> partnerSideScores,
         bool isLongSideAndProposing,
         bool verbose)
 {
@@ -29,7 +29,7 @@ Agent::Agent(int index,
     this->partnerSideNTiers = partnerSideTierSizes.size();
     this->partnerSideScores = partnerSideScores;
     assert(this->partnerSideNTiers == (int) partnerSideScores.size());
-    this->invHappiness = numeric_limits<float>::max();
+    this->invHappiness = numeric_limits<double>::max();
 
     this->poolSize = 0;
     this->sumScoresForPool = 0.0;
@@ -43,7 +43,7 @@ Agent::Agent(int index,
     if (isLongSideAndProposing) {
         default_random_engine generator;
         for (int t = 0; t < this->partnerSideNTiers; t++) {
-            exponential_distribution<float> distribution(this->partnerSideScores[t]);
+            exponential_distribution<double> distribution(this->partnerSideScores[t]);
             for (int i = 0; i < this->poolSizesByTier[t]; i++) {
                 PreferenceEntry pe { t, distribution(generator) };
                 this->preferences.push_back(pe);
@@ -68,17 +68,17 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
     if (this->poolSize == 0) return NULL;
 
     int indexToProposeTo = -1;
-    if (isLongSideAndProposing) {
+    if (this->isLongSideAndProposing) {
         // long side proposing: just follow the pre-generated preferences
         indexToProposeTo = this->preferences[this->proposalsMade.size()].index;
     } else {
         // first ignore the agents already proposed to, randomly pick in the rest
-        uniform_real_distribution<float> distribution(0.0, this->sumScoresForPool);
-        float randPositionInPool = distribution(rng);
-        float baseScore = 0.0;
+        uniform_real_distribution<double> distribution(0.0, this->sumScoresForPool);
+        double randPositionInPool = distribution(rng);
+        double baseScore = 0.0;
         int baseIndex = 0; // excluding already proposed
         for (int t = 0; t < this->partnerSideNTiers; t++) {
-            float sumScoreInTier = this->poolSizesByTier[t] * this->partnerSideScores[t];
+            double sumScoreInTier = this->poolSizesByTier[t] * this->partnerSideScores[t];
             if (randPositionInPool - baseScore < sumScoreInTier) {
                 indexToProposeTo = baseIndex + int((randPositionInPool - baseScore) / this->partnerSideScores[t]);
                 sort(this->proposalsMade.begin(), this->proposalsMade.end(), [](Agent* p1, Agent* p2) { return p1->index < p2->index; });
@@ -108,8 +108,8 @@ Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)
 {
     this->poolSizesByTier[proposer->tier]--;
 
-    exponential_distribution<float> distribution(proposer->score);
-    float invHappinessNew = distribution(rng);
+    exponential_distribution<double> distribution(proposer->score);
+    double invHappinessNew = distribution(rng);
 
     if (invHappinessNew < this->invHappiness) {
         this->invHappiness = invHappinessNew;

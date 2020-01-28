@@ -21,8 +21,8 @@ class Matching
         std::vector<int> tierSizesRec;
         int nTiersProp;
         int nAgentsProp;
-        std::vector<float> scoresProp;
-        std::vector<float> scoresRec;
+        std::vector<double> scoresProp;
+        std::vector<double> scoresRec;
         int nTiersRec;
         int nAgentsRec;
 
@@ -43,13 +43,13 @@ class Matching
             int nTiersRec,
             std::vector<int> tierSizesProp,
             std::vector<int> tierSizesRec,
-            std::vector<float> scoresProp,
-            std::vector<float> scoresRec,
+            std::vector<double> scoresProp,
+            std::vector<double> scoresRec,
             bool verbose=false
         );
         ~Matching();
         void run();
-        std::vector<float> avgRankForProposerByTier();
+        std::vector<double> avgRankForProposerByTier();
         void result();
 };
 

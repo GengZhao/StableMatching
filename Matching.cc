@@ -13,8 +13,8 @@ Matching::Matching(
         int nTiersRec,
         vector<int> tierSizesProp,
         vector<int> tierSizesRec,
-        vector<float> scoresProp,
-        vector<float> scoresRec,
+        vector<double> scoresProp,
+        vector<double> scoresRec,
         bool verbose) :
     rng(rd()),
     proposalCountMatrix(nTiersProp, vector<int>(nTiersRec, 0)),

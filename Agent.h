@@ -13,7 +13,7 @@
 struct PreferenceEntry
 {
     int index;
-    float invHappiness;
+    double invHappiness;
 };
 
 class Agent
@@ -21,13 +21,13 @@ class Agent
     private:
         bool verbose;
 
-        float invHappiness; // only relevant for receivers
-        float sumScoresForPool; // only relevant for proposers
+        double invHappiness; // only relevant for receivers
+        double sumScoresForPool; // only relevant for proposers
         int poolSize; // only relevant for proposers
         Agent* curPartner;
         std::vector<Agent*> proposalsMade; // only for proposers
         std::vector<int> poolSizesByTier; // for both sides
-        std::vector<float> partnerSideScores;
+        std::vector<double> partnerSideScores;
         int partnerSideNTiers;
         bool isLongSideAndProposing;
 
@@ -35,16 +35,18 @@ class Agent
 
     public:
         int index;
-        float score;
+        double score;
         int tier;
 
-        Agent(int index,
-                float score,
-                int tier,
-                std::vector<int> tierSizesPool,
-                std::vector<float> scoresPool,
-                bool isLongSideAndProposing,
-                bool verbose=false);
+        Agent(
+            int index,
+            double score,
+            int tier,
+            std::vector<int> tierSizesPool,
+            std::vector<double> scoresPool,
+            bool isLongSideAndProposing,
+            bool verbose=false
+        );
         ~Agent() {};
         Agent* matchedPartner();
         int numProposalsMade(); // only for proposers
