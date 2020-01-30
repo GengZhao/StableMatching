@@ -35,6 +35,7 @@ class Matching
         std::vector<std::vector<int> > matchCountMatrix;
         std::vector<int> numProposalsMadeByPropTier;
         std::vector<int> numMatchesByPropTier;
+        std::vector<int> numMatchesByRecTier;
         int totalNumProposals;
 
     public:
@@ -49,7 +50,8 @@ class Matching
         );
         ~Matching();
         void run();
-        std::vector<double> avgRankForProposerByTier();
+        std::vector<double> avgRankForProposerByTier(); // only counting matched proposers
+        std::vector<double> avgRankForReceiverByTier(); // only counting matched receivers (simulated)
         void result();
 };
 

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <set>
 #include <cmath>
 #include <cassert>
 #include <random>
@@ -16,27 +17,34 @@ struct PreferenceEntry
     double invHappiness;
 };
 
+enum Role { PROPOSER, RECEIVER };
+
 class Agent
 {
     private:
-        bool verbose;
+        const bool verbose;
 
         double invHappiness; // only relevant for receivers
-        double sumScoresForPool; // only relevant for proposers
-        int poolSize; // only relevant for proposers
+        double sumScoresForPool; // only maintained for proposers (also used in simulation for receivers)
+        int poolSize; // only maintained for proposers (also used in simulation for receivers)
         Agent* curPartner;
         std::vector<Agent*> proposalsMade; // only for proposers
         std::vector<int> poolSizesByTier; // for both sides
-        std::vector<double> partnerSideScores;
-        int partnerSideNTiers;
-        bool isLongSideAndProposing;
+        const std::vector<int> partnerSideTierSizes;
+        const std::vector<double> partnerSideScores;
+        const int partnerSideNTiers;
+        const Role role;
+        const bool isLongSideAndProposing;
 
+        int simulatedRankOfPartner; // only for receivers (simulation cache)
         std::vector<PreferenceEntry> preferences; // only for proposers for performance reason when long side proposes
 
+        int sampleProposerInSimulation(std::mt19937& rng); // only for receivers (simulation helper)
+
     public:
-        int index;
-        double score;
-        int tier;
+        const int index;
+        const double score;
+        const int tier;
 
         Agent(
             int index,
@@ -44,16 +52,19 @@ class Agent
             int tier,
             std::vector<int> tierSizesPool,
             std::vector<double> scoresPool,
+            Role role,
             bool isLongSideAndProposing,
             bool verbose=false
         );
         ~Agent() {};
         Agent* matchedPartner();
-        int numProposalsMade(); // only for proposers
         Agent* propose(std::vector<Agent*>& fullPool, std::mt19937& rng);
         Agent* handleProposal(Agent*, std::mt19937& rng); // returns the rejected agent
         void reject(Agent*);
         void matchWith(Agent*);
+
+        int rankOfPartnerForProposer(); // only for proposers
+        int rankOfPartnerForReceiver(std::vector<Agent*>& fullPool, std::mt19937& rng); // only for receivers, supplying the proposers vector just for convenience
 };
 
 #endif

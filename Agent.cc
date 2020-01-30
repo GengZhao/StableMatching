@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
 #include <cmath>
 #include <cassert>
 #include <random>
@@ -11,24 +12,25 @@
 
 using namespace std;
 
-Agent::Agent(int index,
+Agent::Agent(
+        int index,
         double score,
         int tier,
         std::vector<int> partnerSideTierSizes,
         std::vector<double> partnerSideScores,
+        Role role,
         bool isLongSideAndProposing,
-        bool verbose)
+        bool verbose) :
+    verbose(verbose),
+    partnerSideTierSizes(partnerSideTierSizes),
+    partnerSideScores(partnerSideScores),
+    partnerSideNTiers(partnerSideTierSizes.size()),
+    role(role), isLongSideAndProposing(isLongSideAndProposing),
+    simulatedRankOfPartner(0),
+    index(index), score(score), tier(tier)
 {
-    this->verbose = verbose;
-
-    this->index = index;
-    this->score = score;
-    this->tier = tier;
     this->curPartner = NULL;
     this->poolSizesByTier = partnerSideTierSizes;
-    this->partnerSideNTiers = partnerSideTierSizes.size();
-    this->partnerSideScores = partnerSideScores;
-    assert(this->partnerSideNTiers == (int) partnerSideScores.size());
     this->invHappiness = numeric_limits<double>::max();
 
     this->poolSize = 0;
@@ -39,11 +41,10 @@ Agent::Agent(int index,
     }
 
     // if long side proposes, pre-generate all preferences by exp distribution for proposers
-    this->isLongSideAndProposing = isLongSideAndProposing;
     if (isLongSideAndProposing) {
         default_random_engine generator;
         for (int t = 0; t < this->partnerSideNTiers; t++) {
-            exponential_distribution<double> distribution(this->partnerSideScores[t]);
+            exponential_distribution<double> distribution(partnerSideScores[t]);
             for (int i = 0; i < this->poolSizesByTier[t]; i++) {
                 PreferenceEntry pe { t, distribution(generator) };
                 this->preferences.push_back(pe);
@@ -56,11 +57,6 @@ Agent::Agent(int index,
 Agent* Agent::matchedPartner()
 {
     return this->curPartner;
-}
-
-int Agent::numProposalsMade()
-{
-    return this->proposalsMade.size();
 }
 
 Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
@@ -133,4 +129,72 @@ void Agent::reject(Agent* agent)
 void Agent::matchWith(Agent* agent)
 {
     this->curPartner = agent;
+}
+
+int Agent::rankOfPartnerForProposer()
+{
+    assert(this->role == PROPOSER);
+    return this->proposalsMade.size();
+}
+
+int Agent::sampleProposerInSimulation(mt19937& rng)
+{
+    uniform_real_distribution<double> distribution(0.0, this->sumScoresForPool);
+    double randPositionInPool = distribution(rng);
+    double baseScore = 0.0;
+    int baseIndex = 0; // excluding already proposed
+    for (int t = 0; t < this->partnerSideNTiers; t++) {
+        double sumScoreInTier = this->partnerSideTierSizes[t] * this->partnerSideScores[t];
+        if (randPositionInPool - baseScore < sumScoreInTier) {
+            return baseIndex + int((randPositionInPool - baseScore) / this->partnerSideScores[t]);
+        }
+        baseScore += sumScoreInTier;
+        baseIndex += this->poolSizesByTier[t];
+    }
+    return this->poolSize; // this should never be reached
+}
+
+int Agent::rankOfPartnerForReceiver(vector<Agent*>& proposers, mt19937& rng)
+{
+    assert(this->role == RECEIVER);
+    assert(this->curPartner); // undefined if unmatched
+    if (this->simulatedRankOfPartner > 0)
+        return this->simulatedRankOfPartner;
+
+    int rank = 1;
+    for (int t = 0; t < this->partnerSideNTiers; t++) {
+        if (this->poolSizesByTier[t] == 0) continue;
+        binomial_distribution<int> distribution(this->poolSizesByTier[t],
+                1 - exp(-this->partnerSideScores[t] * this->invHappiness));
+        rank += distribution(rng);
+    }
+    this->simulatedRankOfPartner = rank;
+    return rank;
+    /*
+    int sampleCount = 0;
+    vector<int> topRanksInPropTier;
+    for (int tp = 0; tp < this->partnerSideNTiers; tp++) {
+        int topRank = this->partnerSideTierSizes[tp];
+        uniform_int_distribution<int> distribution(0, this->partnerSideTierSizes[tp] - 1);
+        for (int i = this->poolSizesByTier[tp]; i < this->partnerSideTierSizes[tp]; i++) {
+            int sampleInTier = distribution(rng);
+            if (sampleInTier < topRank)
+                topRank = sampleInTier;
+        }
+        topRanksInPropTier.push_back(topRank);
+    }
+    vector<unordered_set<int> > samplesByPropTier(this->partnerSideNTiers);
+    while (true) {
+        int sample = this->sampleProposerInSimulation(rng);
+        int sampleTier = proposers[sample]->tier;
+        if (samplesByPropTier[sampleTier].find(sample) != samplesByPropTier[sampleTier].end())
+            continue;
+        if (samplesByPropTier[sampleTier].size() == topRanksInPropTier[sampleTier]) {
+            this->simulatedRankOfPartner = sampleCount + 1;
+            return sampleCount + 1;
+        }
+        samplesByPropTier[sampleTier].insert(sample);
+        sampleCount++;
+    }
+    */
 }
