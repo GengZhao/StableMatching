@@ -140,7 +140,7 @@ vector<double> Matching::avgRankForReceiverByTier()
         double avgRankInTier = 0.0;
         for (int i = 0; i < this->tierSizesRec[tr]; i++) {
             if (this->agentsRec[index]->matchedPartner()) {
-                avgRankInTier += this->agentsRec[index]->rankOfPartnerForReceiver(this->agentsProp, this->rng) / (double) this->numMatchesByRecTier[tr];
+                avgRankInTier += this->agentsRec[index]->rankOfPartnerForReceiver(this->rng) / (double) this->numMatchesByRecTier[tr];
             }
             index++;
         }
@@ -168,7 +168,7 @@ void Matching::result()
             int partnerRankOfPartner = -1;
             if (p->matchedPartner()) {
                 matchedIndex = p->matchedPartner()->index;
-                partnerRankOfPartner = p->matchedPartner()->rankOfPartnerForReceiver(this->agentsProp, this->rng);
+                partnerRankOfPartner = p->matchedPartner()->rankOfPartnerForReceiver(this->rng);
             }
             cout << "(P)" << p->index << " - (R)" << matchedIndex
                  << " [Rank " << p->rankOfPartnerForProposer() << " and " << partnerRankOfPartner << "]" << endl;

@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include "Matching.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -19,11 +20,22 @@ int main()
     int nTiersProp = tierSizesProp.size();
     int nTiersRec = tierSizesRec.size();
 
-    int nStepsInPow2 = 10;
+    int nStepsInPow2 = 12;
 
-    int nThreads = 4;
-    int nIter = 20;
+    int nThreads = 8;
+    int nIter = 50;
+
+    ofstream outFile;
+    outFile.open("fixed_tiers_growing_market-" + getTime() + ".out");
     for (int s = 0; s < nStepsInPow2; s++) {
+        outFile << nTiersProp << "\n";
+        printVector(tierSizesProp, outFile);
+        printVector(scoresProp, outFile);
+        outFile << nTiersRec << "\n";
+        printVector(tierSizesRec, outFile);
+        printVector(scoresRec, outFile);
+        outFile << nIter * nThreads << "\n";
+
         vector<vector<double> > avgRanksByPropTier(nTiersProp), avgRanksByRecTier(nTiersRec);
         for (vector<double>& v : avgRanksByPropTier) v.reserve(nIter * nThreads);
         for (vector<double>& v : avgRanksByRecTier) v.reserve(nIter * nThreads);
@@ -52,14 +64,20 @@ int main()
         }
         for (thread& th : threads) th.join();
 
-        for (vector<double>& v : avgRanksByPropTier) assert(v.size() == (unsigned int) nIter * nThreads);
-        for (vector<double>& v : avgRanksByRecTier) assert(v.size() == (unsigned int) nIter * nThreads);
-
+        for (vector<double>& v : avgRanksByPropTier) {
+            assert(v.size() == (unsigned int) nIter * nThreads);
+            printVector(v, outFile);
+        }
+        for (vector<double>& v : avgRanksByRecTier) {
+            assert(v.size() == (unsigned int) nIter * nThreads);
+            printVector(v, outFile);
+        }
 
         transform(tierSizesProp.begin(), tierSizesProp.end(),
                 tierSizesProp.begin(), bind1st(multiplies<int>(), 2));
         transform(tierSizesRec.begin(), tierSizesRec.end(),
                 tierSizesRec.begin(), bind1st(multiplies<int>(), 2));
     }
+    outFile.close();
     return 0;
 }

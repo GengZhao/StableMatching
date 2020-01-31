@@ -137,24 +137,7 @@ int Agent::rankOfPartnerForProposer()
     return this->proposalsMade.size();
 }
 
-int Agent::sampleProposerInSimulation(mt19937& rng)
-{
-    uniform_real_distribution<double> distribution(0.0, this->sumScoresForPool);
-    double randPositionInPool = distribution(rng);
-    double baseScore = 0.0;
-    int baseIndex = 0; // excluding already proposed
-    for (int t = 0; t < this->partnerSideNTiers; t++) {
-        double sumScoreInTier = this->partnerSideTierSizes[t] * this->partnerSideScores[t];
-        if (randPositionInPool - baseScore < sumScoreInTier) {
-            return baseIndex + int((randPositionInPool - baseScore) / this->partnerSideScores[t]);
-        }
-        baseScore += sumScoreInTier;
-        baseIndex += this->poolSizesByTier[t];
-    }
-    return this->poolSize; // this should never be reached
-}
-
-int Agent::rankOfPartnerForReceiver(vector<Agent*>& proposers, mt19937& rng)
+int Agent::rankOfPartnerForReceiver(mt19937& rng)
 {
     assert(this->role == RECEIVER);
     assert(this->curPartner); // undefined if unmatched
@@ -170,31 +153,4 @@ int Agent::rankOfPartnerForReceiver(vector<Agent*>& proposers, mt19937& rng)
     }
     this->simulatedRankOfPartner = rank;
     return rank;
-    /*
-    int sampleCount = 0;
-    vector<int> topRanksInPropTier;
-    for (int tp = 0; tp < this->partnerSideNTiers; tp++) {
-        int topRank = this->partnerSideTierSizes[tp];
-        uniform_int_distribution<int> distribution(0, this->partnerSideTierSizes[tp] - 1);
-        for (int i = this->poolSizesByTier[tp]; i < this->partnerSideTierSizes[tp]; i++) {
-            int sampleInTier = distribution(rng);
-            if (sampleInTier < topRank)
-                topRank = sampleInTier;
-        }
-        topRanksInPropTier.push_back(topRank);
-    }
-    vector<unordered_set<int> > samplesByPropTier(this->partnerSideNTiers);
-    while (true) {
-        int sample = this->sampleProposerInSimulation(rng);
-        int sampleTier = proposers[sample]->tier;
-        if (samplesByPropTier[sampleTier].find(sample) != samplesByPropTier[sampleTier].end())
-            continue;
-        if (samplesByPropTier[sampleTier].size() == topRanksInPropTier[sampleTier]) {
-            this->simulatedRankOfPartner = sampleCount + 1;
-            return sampleCount + 1;
-        }
-        samplesByPropTier[sampleTier].insert(sample);
-        sampleCount++;
-    }
-    */
 }

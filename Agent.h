@@ -39,8 +39,6 @@ class Agent
         int simulatedRankOfPartner; // only for receivers (simulation cache)
         std::vector<PreferenceEntry> preferences; // only for proposers for performance reason when long side proposes
 
-        int sampleProposerInSimulation(std::mt19937& rng); // only for receivers (simulation helper)
-
     public:
         const int index;
         const double score;
@@ -64,7 +62,7 @@ class Agent
         void matchWith(Agent*);
 
         int rankOfPartnerForProposer(); // only for proposers
-        int rankOfPartnerForReceiver(std::vector<Agent*>& fullPool, std::mt19937& rng); // only for receivers, supplying the proposers vector just for convenience
+        int rankOfPartnerForReceiver(std::mt19937& rng); // only for receivers, supplying the proposers vector just for convenience
 };
 
 #endif
