@@ -16,15 +16,15 @@ class Matching
         std::random_device rd;
         std::mt19937 rng;
 
-        bool verbose;
-        std::vector<int> tierSizesProp;
-        std::vector<int> tierSizesRec;
-        int nTiersProp;
-        int nAgentsProp;
-        std::vector<double> scoresProp;
-        std::vector<double> scoresRec;
-        int nTiersRec;
-        int nAgentsRec;
+        const bool verbose;
+        const int nTiersProp;
+        const int nTiersRec;
+        const std::vector<int> tierSizesProp;
+        const std::vector<int> tierSizesRec;
+        const std::vector<double> scoresProp;
+        const std::vector<double> scoresRec;
+        const int nAgentsProp;
+        const int nAgentsRec;
 
         std::vector<Agent*> agentsProp;
         std::vector<Agent*> agentsRec;
@@ -38,20 +38,28 @@ class Matching
         std::vector<int> numMatchesByRecTier;
         int totalNumProposals;
 
+        const bool pregeneratePreferences; // for long running proposing chain
+        const bool savePreferences; // for generating full preferences
+
+        void reverseRun();
+
     public:
         Matching(
-            int nTiersProp,
-            int nTiersRec,
-            std::vector<int> tierSizesProp,
-            std::vector<int> tierSizesRec,
-            std::vector<double> scoresProp,
-            std::vector<double> scoresRec,
-            bool verbose=false
+            const int nTiersProp,
+            const int nTiersRec,
+            const std::vector<int>& tierSizesProp,
+            const std::vector<int>& tierSizesRec,
+            const std::vector<double>& scoresProp,
+            const std::vector<double>& scoresRec,
+            const bool pregeneratePreferences=false,
+            const bool savePreferences=false,
+            const bool verbose=false
         );
         ~Matching();
         void run();
         std::vector<double> avgRankForProposerByTier(); // only counting matched proposers
         std::vector<double> avgRankForReceiverByTier(); // only counting matched receivers (simulated)
+        std::vector<std::vector<int> > reverseRunCountUniquePartners();
         void result();
 };
 

@@ -5,45 +5,45 @@
 #include <cassert>
 
 #include "Matching.h"
+#include "utils.h"
 
 using namespace std;
 
 Matching::Matching(
-        int nTiersProp,
-        int nTiersRec,
-        vector<int> tierSizesProp,
-        vector<int> tierSizesRec,
-        vector<double> scoresProp,
-        vector<double> scoresRec,
-        bool verbose) :
-    rng(rd()),
+        const int nTiersProp,
+        const int nTiersRec,
+        const vector<int>& tierSizesProp,
+        const vector<int>& tierSizesRec,
+        const vector<double>& scoresProp,
+        const vector<double>& scoresRec,
+        const bool pregeneratePreferences,
+        const bool savePreferences,
+        const bool verbose) :
+    rng(rd()), verbose(verbose),
+    nTiersProp(nTiersProp), nTiersRec(nTiersRec),
+    tierSizesProp(tierSizesProp), tierSizesRec(tierSizesRec),
+    scoresProp(scoresProp), scoresRec(scoresRec),
+    nAgentsProp(accumulate(tierSizesProp.begin(), tierSizesProp.end(), 0)),
+    nAgentsRec(accumulate(tierSizesRec.begin(), tierSizesRec.end(), 0)),
     proposalCountMatrix(nTiersProp, vector<int>(nTiersRec, 0)),
     matchCountMatrix(nTiersProp, vector<int>(nTiersRec, 0)),
     numProposalsMadeByPropTier(nTiersProp, 0),
     numMatchesByPropTier(nTiersProp, 0),
     numMatchesByRecTier(nTiersRec, 0),
-    totalNumProposals(0)
+    totalNumProposals(0),
+    pregeneratePreferences(pregeneratePreferences),
+    savePreferences(savePreferences)
 {
-    this->nTiersProp = nTiersProp;
-    this->nTiersRec = nTiersRec;
-    this->tierSizesProp = tierSizesProp;
-    this->tierSizesRec = tierSizesRec;
-    this->scoresProp = scoresProp;
-    this->scoresRec = scoresRec;
-    this->verbose = verbose;
-
     assert(this->nTiersProp == (int) tierSizesProp.size());
     assert(this->nTiersRec == (int) tierSizesRec.size());
     assert(this->nTiersProp == (int) scoresProp.size());
     assert(this->nTiersRec == (int) scoresRec.size());
 
-    this->nAgentsProp = accumulate(tierSizesProp.begin(), tierSizesProp.end(), 0);
-    this->nAgentsRec = accumulate(tierSizesRec.begin(), tierSizesRec.end(), 0);
     bool longSideProposing = this->nAgentsProp > this->nAgentsRec;
     int indexProp = 0;
     for (int tp = 0; tp < nTiersProp; tp++) {
         for (int i = 0; i < tierSizesProp[tp]; i++) {
-            Agent* prop = new Agent(indexProp, scoresProp[tp], tp, tierSizesRec, scoresRec, PROPOSER, longSideProposing, verbose);
+            Agent* prop = new Agent(indexProp, scoresProp[tp], tp, tierSizesRec, scoresRec, PROPOSER, longSideProposing || pregeneratePreferences, savePreferences, verbose);
             this->agentsProp.push_back(prop);
             this->agentsToPropose.push(prop);
             indexProp++;
@@ -53,7 +53,7 @@ Matching::Matching(
     int indexRec = 0;
     for (int tr = 0; tr < nTiersRec; tr++) {
         for (int i = 0; i < tierSizesRec[tr]; i++) {
-            Agent* rec = new Agent(indexRec, scoresRec[tr], tr, tierSizesProp, scoresProp, RECEIVER, false, verbose);
+            Agent* rec = new Agent(indexRec, scoresRec[tr], tr, tierSizesProp, scoresProp, RECEIVER, pregeneratePreferences, savePreferences, verbose);
             this->agentsRec.push_back(rec);
             indexRec++;
         }
@@ -62,12 +62,8 @@ Matching::Matching(
 
 Matching::~Matching()
 {
-    for (Agent* p : this->agentsProp) {
-        delete p;
-    }
-    for (Agent* r : this->agentsRec) {
-        delete r;
-    }
+    for (Agent* p : this->agentsProp) delete p;
+    for (Agent* r : this->agentsRec) delete r;
 }
 
 void Matching::run()
@@ -98,22 +94,30 @@ void Matching::run()
     }
 }
 
-template<typename T>
-static void printVec(const vector<T>& vec)
+// can only reverse run after a normal run
+void Matching::reverseRun()
 {
-    for (typename vector<T>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
-        cout << "\t" << *it;
+    assert(this->pregeneratePreferences && this->savePreferences);
+
+    assert(this->agentsToPropose.empty());
+    for (Agent* p : this->agentsProp) p->reverseRole();
+    for (Agent* r : this->agentsRec) {
+        r->reverseRole();
+        this->agentsToPropose.push(r);
     }
-    cout << endl;
+    // rerun deferred acceptance
+    while (!(this->agentsToPropose.empty())) {
+        Agent* proposer = this->agentsToPropose.front();
+        this->agentsToPropose.pop();
+        Agent* receiver = proposer->propose(this->agentsProp, this->rng);
+        if (receiver) {
+            Agent* rejected = receiver->handleProposal(proposer, this->rng);
+            if (rejected) this->agentsToPropose.push(rejected);
+        }
+    }
 }
 
-template<typename T>
-static void printVec2D(const vector<T>& vec2d)
-{
-    for (typename vector<T>::const_iterator it = vec2d.begin(); it != vec2d.end(); ++it) {
-        printVec(*it);
-    }
-}
+/** Result computation **/
 
 vector<double> Matching::avgRankForProposerByTier()
 {
@@ -149,17 +153,29 @@ vector<double> Matching::avgRankForReceiverByTier()
     return avgRanks;
 }
 
+vector<vector<int> > Matching::reverseRunCountUniquePartners()
+{
+    this->reverseRun();
+    vector<vector<int> > uniquePartners{(unsigned long) this->nTiersProp, vector<int>{this->nTiersRec, 0}};
+    for (Agent* p : this->agentsProp) {
+        if (p->hasUniqueMatch()) {
+            uniquePartners[p->tier][p->matchedPartner()->tier]++;
+        }
+    }
+    return uniquePartners;
+}
+
 void Matching::result()
 {
     cout << "Result summary" << endl << "=============="  << endl;
     cout << "Proposer tier sizes:";
-    printVec(this->tierSizesProp);
+    printVectorTsv(this->tierSizesProp);
     cout << "Receiver tier sizes:";
-    printVec(this->tierSizesRec);
+    printVectorTsv(this->tierSizesRec);
     cout << "Proposer scores:";
-    printVec(this->scoresProp);
+    printVectorTsv(this->scoresProp);
     cout << "Receiver scores:";
-    printVec(this->scoresRec);
+    printVectorTsv(this->scoresRec);
 
     if (this->verbose) {
         cout << "Matched pairs:" << endl;
@@ -176,24 +192,24 @@ void Matching::result()
     }
 
     cout << endl << "Proposal counts:" << endl;
-    printVec2D(this->proposalCountMatrix);
+    printVector2DTsv(this->proposalCountMatrix);
 
     cout << endl << "Match counts:" << endl;
-    printVec2D(this->matchCountMatrix);
+    printVector2DTsv(this->matchCountMatrix);
 
     cout << endl << "Proposal counts by proposer tier:" << endl;
-    printVec(this->numProposalsMadeByPropTier);
+    printVectorTsv(this->numProposalsMadeByPropTier);
 
     cout << endl << "Match counts by proposer tier:" << endl;
-    printVec(this->numMatchesByPropTier);
+    printVectorTsv(this->numMatchesByPropTier);
 
     cout << endl << "Match counts by receiver tier:" << endl;
-    printVec(this->numMatchesByRecTier);
+    printVectorTsv(this->numMatchesByRecTier);
 
     cout << endl << "Avg rank of match by proposer tier:" << endl;
-    printVec(this->avgRankForProposerByTier());
+    printVectorTsv(this->avgRankForProposerByTier());
 
     cout << endl << "Avg rank of match by receiver tier:" << endl;
-    printVec(this->avgRankForReceiverByTier());
+    printVectorTsv(this->avgRankForReceiverByTier());
 
 }

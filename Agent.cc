@@ -2,7 +2,10 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <set>
 #include <unordered_set>
+#include <map>
+#include <unordered_map>
 #include <cmath>
 #include <cassert>
 #include <random>
@@ -13,59 +16,115 @@
 using namespace std;
 
 Agent::Agent(
-        int index,
-        double score,
-        int tier,
-        std::vector<int> partnerSideTierSizes,
-        std::vector<double> partnerSideScores,
-        Role role,
-        bool isLongSideAndProposing,
-        bool verbose) :
+        const int index,
+        const double score,
+        const int tier,
+        const vector<int> partnerSideTierSizes,
+        const vector<double> partnerSideScores,
+        const Role role,
+        const bool pregeneratePreferences,
+        const bool savePreferences,
+        const bool verbose) :
     verbose(verbose),
     partnerSideTierSizes(partnerSideTierSizes),
     partnerSideScores(partnerSideScores),
     partnerSideNTiers(partnerSideTierSizes.size()),
-    role(role), isLongSideAndProposing(isLongSideAndProposing),
+    role(role), roleReversed(false),
+    pregeneratePreferences(pregeneratePreferences), savePreferences(savePreferences),
+    sumScoresForPool(inner_product(partnerSideTierSizes.begin(), partnerSideTierSizes.end(),
+                partnerSideScores.begin(), 0.0)),
+    poolSize(accumulate(partnerSideTierSizes.begin(), partnerSideTierSizes.end(), 0)),
+    curPartner(NULL), prevRunPartner(NULL),
+    poolSizesByTier(partnerSideTierSizes),
+    invHappiness(numeric_limits<double>::max()),
     simulatedRankOfPartner(0),
     index(index), score(score), tier(tier)
 {
-    this->curPartner = NULL;
-    this->poolSizesByTier = partnerSideTierSizes;
-    this->invHappiness = numeric_limits<double>::max();
-
-    this->poolSize = 0;
-    this->sumScoresForPool = 0.0;
-    for (int t = 0; t < this->partnerSideNTiers; t++) {
-        this->poolSize += partnerSideTierSizes[t];
-        this->sumScoresForPool += partnerSideTierSizes[t] * partnerSideScores[t];
-    }
-
-    // if long side proposes, pre-generate all preferences by exp distribution for proposers
-    if (isLongSideAndProposing) {
-        default_random_engine generator;
-        for (int t = 0; t < this->partnerSideNTiers; t++) {
-            exponential_distribution<double> distribution(partnerSideScores[t]);
-            for (int i = 0; i < this->poolSizesByTier[t]; i++) {
-                PreferenceEntry pe { t, distribution(generator) };
-                this->preferences.push_back(pe);
-            }
+    // if long side proposes or if proposals run long, pre-generate all preferences by exp distribution for proposers
+    if (pregeneratePreferences) {
+        random_device rd{};
+        default_random_engine generator{rd()};
+        int pindex = 0;
+        switch (this->role)
+        {
+            case PROPOSER:
+                for (int t = 0; t < partnerSideNTiers; t++) {
+                    exponential_distribution<double> distribution(partnerSideScores[t]);
+                    for (int i = 0; i < partnerSideTierSizes[t]; i++) {
+                        PreferenceEntry pe { pindex, distribution(generator) };
+                        this->preferences.push_back(pe);
+                        pindex++;
+                    }
+                }
+                sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) { return p1.invHappiness < p2.invHappiness; });
+                break;
+            case RECEIVER:
+                for (int t = 0; t < partnerSideNTiers; t++) {
+                    exponential_distribution<double> distribution(partnerSideScores[t]);
+                    for (int i = 0; i < partnerSideTierSizes[t]; i++) {
+                        this->invHappinessForPartners[pindex] = distribution(generator);
+                        pindex++;
+                    }
+                }
+                break;
         }
-        sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) { return p1.invHappiness < p2.invHappiness; });
     }
 }
 
-Agent* Agent::matchedPartner()
+void Agent::completePreferences()
 {
-    return this->curPartner;
+    switch (this->role)
+    {
+        case PROPOSER:
+            assert(this->pregeneratePreferences);
+            for (const PreferenceEntry& pe : this->preferences) {
+                this->invHappinessForPartners[pe.index] = pe.invHappiness;
+            }
+            break;
+        case RECEIVER:
+            assert(this->savePreferences || this->pregeneratePreferences);
+            random_device rd{};
+            default_random_engine generator{rd()};
+            int pindex = 0;
+            for (int t = 0; t < this->partnerSideNTiers; t++) {
+                exponential_distribution<double> distribution(partnerSideScores[t]);
+                for (int i = 0; i < this->partnerSideTierSizes[t]; i++) {
+                    map<int, double>::iterator it = this->invHappinessForPartners.find(pindex);
+                    if (it == this->invHappinessForPartners.end()) {
+                        PreferenceEntry pe { pindex, distribution(generator) };
+                        this->preferences.push_back(pe);
+                    } else {
+                        PreferenceEntry pe { pindex, it->second };
+                        this->preferences.push_back(pe);
+                    }
+                    pindex++;
+                }
+            }
+            sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) { return p1.invHappiness < p2.invHappiness; });
+            break;
+    }
 }
+
+// should be called after a normal run
+void Agent::reverseRole()
+{
+    this->roleReversed = true;
+    this->prevRunPartner = this->curPartner;
+    this->curPartner = NULL;
+    this->poolSizesByTier = this->partnerSideTierSizes;
+
+    this->completePreferences();
+}
+
+/** Manipulation and key operations **/
 
 Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
 {
     if (this->poolSize == 0) return NULL;
 
     int indexToProposeTo = -1;
-    if (this->isLongSideAndProposing) {
-        // long side proposing: just follow the pre-generated preferences
+    if (this->pregeneratePreferences || this->roleReversed) {
+        // long side proposing or reverse run: just follow the pre-generated preferences
         indexToProposeTo = this->preferences[this->proposalsMade.size()].index;
     } else {
         // first ignore the agents already proposed to, randomly pick in the rest
@@ -104,8 +163,14 @@ Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)
 {
     this->poolSizesByTier[proposer->tier]--;
 
-    exponential_distribution<double> distribution(proposer->score);
-    double invHappinessNew = distribution(rng);
+    double invHappinessNew;
+    if (this->pregeneratePreferences || this->roleReversed) {
+        invHappinessNew = this->invHappinessForPartners[proposer->index];
+    } else {
+        exponential_distribution<double> distribution(proposer->score);
+        invHappinessNew = distribution(rng);
+        if (this->savePreferences) this->invHappinessForPartners[proposer->index] = invHappinessNew;
+    }
 
     if (invHappinessNew < this->invHappiness) {
         this->invHappiness = invHappinessNew;
@@ -129,6 +194,20 @@ void Agent::reject(Agent* agent)
 void Agent::matchWith(Agent* agent)
 {
     this->curPartner = agent;
+}
+
+/** Result computation **/
+
+Agent* Agent::matchedPartner()
+{
+    return this->curPartner;
+}
+
+// not counting the unmatched case
+bool Agent::hasUniqueMatch()
+{
+    assert(this->roleReversed);
+    return this->curPartner && this->prevRunPartner == this->curPartner;
 }
 
 int Agent::rankOfPartnerForProposer()
