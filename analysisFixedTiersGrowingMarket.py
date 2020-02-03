@@ -32,7 +32,22 @@ def readMatchingResultFromFile(inFile):
         proposerResults.append([[float(next(inFile)) for i in range(nIters)] for tp in range(nTiersProp)])
         receiverResults.append([[float(next(inFile)) for i in range(nIters)] for tp in range(nTiersRec)])
 
-    return (matchingConfigs, proposerResults, receiverResults)
+def readUniqueCountResultFromFile(inFile):
+    matchingConfigs = []
+    proposerUniquePartnerCountByTier = []
+    for l in inFile:
+        nTiersProp = int(l)
+        tierSizesProp = [int(next(inFile)) for tr in range(nTiersProp)]
+        scoresProp = [int(next(inFile)) for tr in range(nTiersProp)]
+        nTiersRec = int(next(inFile))
+        tierSizesRec = [int(next(inFile)) for tr in range(nTiersRec)]
+        scoresRec = [int(next(inFile)) for tr in range(nTiersRec)]
+        matchingConfigs.append(MatchingConfig(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, scoresRec))
+
+        nIters = int(next(inFile))
+        proposerUniquePartnerCountByTier.append([[int(next(inFile)) for i in range(nIters)] for tp in range(nTiersProp)])
+
+    return (matchingConfigs, proposerUniquePartnerCountByTier)
 
 if __name__ == '__main__':
     dataFile = open(sys.argv[-1], 'r')
