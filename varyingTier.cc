@@ -13,12 +13,12 @@ using namespace std;
 
 int main()
 {
-    vector<int> tierSizesProp{50, 950};
-    vector<int> defaultTierSizesProp{700, 300};
-    vector<int> tierSizesRec{400, 600};
-    vector<double> scoresProp{4.0, 1.0};
-    vector<double> scoresRec{1.0, 16.0};
-    vector<double> defaultScoresRec{2.5, 1.0};
+    vector<int> tierSizesProp{400, 600};
+    vector<int> tierSizesRec{50, 950};
+    vector<int> defaultTierSizesRec{700, 300};
+    vector<double> scoresProp{1.0, 16.0};
+    vector<double> defaultScoresProp{2.5, 1.0};
+    vector<double> scoresRec{4.0, 1.0};
     int nTiersProp = tierSizesProp.size();
     int nTiersRec = tierSizesRec.size();
 
@@ -26,7 +26,7 @@ int main()
     int nStepsScore = 17;
 
     int nThreads = 8;
-    int nIter = 2500;
+    int nIter = 6250;
 
     ofstream outFileTierSizes, outFileScores;
 
@@ -35,10 +35,10 @@ int main()
     for (int s = 0; s < nStepsTierSize; s++) {
         outFileTierSizes << nTiersProp << "\n";
         printVector(tierSizesProp, outFileTierSizes);
-        printVector(scoresProp, outFileTierSizes);
+        printVector(defaultScoresProp, outFileTierSizes);
         outFileTierSizes << nTiersRec << "\n";
         printVector(tierSizesRec, outFileTierSizes);
-        printVector(defaultScoresRec, outFileTierSizes);
+        printVector(scoresRec, outFileTierSizes);
         outFileTierSizes << nIter * nThreads << "\n";
 
         vector<vector<double> > avgRanksByPropTier(nTiersProp), avgRanksByRecTier(nTiersRec);
@@ -50,7 +50,7 @@ int main()
         for (int th = 0; th < nThreads; th++) {
             threads.push_back(thread([&] {
                 for (int it = 0; it < nIter; it++) {
-                    Matching M(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, defaultScoresRec, false);
+                    Matching M(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, defaultScoresProp, scoresRec, false);
                     M.run();
                     vector<double> avgRankProp = M.avgRankForProposerByTier();
                     vector<double> avgRankRec = M.avgRankForReceiverByTier();
@@ -78,8 +78,8 @@ int main()
             printVector(v, outFileTierSizes);
         }
 
-        tierSizesProp[0] += 50;
-        tierSizesProp[1] -= 50;
+        tierSizesRec[0] += 50;
+        tierSizesRec[1] -= 50;
         cout << "Tier sizes step: " << s << endl;
     }
     outFileTierSizes.close();
@@ -88,10 +88,10 @@ int main()
     outFileScores.open("fixed_market_varying_scores-" + getTime() + ".out");
     for (int s = 0; s < nStepsScore; s++) {
         outFileScores << nTiersProp << "\n";
-        printVector(defaultTierSizesProp, outFileScores);
+        printVector(tierSizesProp, outFileScores);
         printVector(scoresProp, outFileScores);
         outFileScores << nTiersRec << "\n";
-        printVector(tierSizesRec, outFileScores);
+        printVector(defaultTierSizesRec, outFileScores);
         printVector(scoresRec, outFileScores);
         outFileScores << nIter * nThreads << "\n";
 
@@ -104,7 +104,7 @@ int main()
         for (int th = 0; th < nThreads; th++) {
             threads.push_back(thread([&] {
                 for (int it = 0; it < nIter; it++) {
-                    Matching M(nTiersProp, nTiersRec, defaultTierSizesProp, tierSizesRec, scoresProp, scoresRec, false);
+                    Matching M(nTiersProp, nTiersRec, tierSizesProp, defaultTierSizesRec, scoresProp, scoresRec, false);
                     M.run();
                     vector<double> avgRankProp = M.avgRankForProposerByTier();
                     vector<double> avgRankRec = M.avgRankForReceiverByTier();
@@ -132,7 +132,7 @@ int main()
             printVector(v, outFileScores);
         }
 
-        scoresRec[1] /= sqrt(2.0);
+        scoresProp[1] /= sqrt(2.0);
         cout << "Scores step: " << s << endl;
     }
     outFileScores.close();

@@ -9,14 +9,23 @@ using namespace std;
 
 int main()
 {
-    vector<int> tierSizesProp{500, 500};
-    vector<int> tierSizesRec{500, 500};
-    vector<double> scoresProp{4.0, 1.0};
-    vector<double> scoresRec{4.0, 1.0};
+    vector<int> tierSizesProp{50000, 50000};
+    vector<int> tierSizesRec{6250, 31250, 62500};
+    vector<double> scoresProp{3.0, 1.0};
+    vector<double> scoresRec{1.0, 2.0, 3.0};
 
-    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, false, false);
-    M.run();
-    M.result();
+    // printVectorTsv(tierSizesProp, cout);
+    // printVectorTsv(tierSizesRec, cout);
+    // printVectorTsv(scoresProp, cout);
+    // printVectorTsv(scoresRec, cout);
+
+    for (int i = 0; i < 4; i++) {
+        Matching M(2, 3, tierSizesProp, tierSizesRec, scoresProp, scoresRec, false, false);
+        M.run();
+        cout << M.totalNumProposals << endl;
+    }
+    // M.result();
+
     // vector<vector<int> > uniqueMatches = M.reverseRunCountUniquePartners();
     // cout << endl << "Unique matching pairs (core):" << endl;
     // printVector2DTsv(uniqueMatches);

@@ -36,7 +36,6 @@ class Matching
         std::vector<int> numProposalsMadeByPropTier;
         std::vector<int> numMatchesByPropTier;
         std::vector<int> numMatchesByRecTier;
-        int totalNumProposals;
 
         const bool pregeneratePreferences; // for long running proposing chain
         const bool savePreferences; // for generating full preferences
@@ -44,6 +43,8 @@ class Matching
         void reverseRun();
 
     public:
+        int totalNumProposals; // for convenience
+
         Matching(
             const int nTiersProp,
             const int nTiersRec,

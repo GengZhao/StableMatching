@@ -22,15 +22,17 @@ def readMatchingResultFromFile(inFile):
     for l in inFile:
         nTiersProp = int(l)
         tierSizesProp = [int(next(inFile)) for tr in range(nTiersProp)]
-        scoresProp = [int(next(inFile)) for tr in range(nTiersProp)]
+        scoresProp = [float(next(inFile)) for tr in range(nTiersProp)]
         nTiersRec = int(next(inFile))
         tierSizesRec = [int(next(inFile)) for tr in range(nTiersRec)]
-        scoresRec = [int(next(inFile)) for tr in range(nTiersRec)]
+        scoresRec = [float(next(inFile)) for tr in range(nTiersRec)]
         matchingConfigs.append(MatchingConfig(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, scoresRec))
 
         nIters = int(next(inFile))
         proposerResults.append([[float(next(inFile)) for i in range(nIters)] for tp in range(nTiersProp)])
         receiverResults.append([[float(next(inFile)) for i in range(nIters)] for tp in range(nTiersRec)])
+
+    return (matchingConfigs, proposerResults, receiverResults)
 
 def readUniqueCountResultFromFile(inFile):
     matchingConfigs = []
@@ -38,10 +40,10 @@ def readUniqueCountResultFromFile(inFile):
     for l in inFile:
         nTiersProp = int(l)
         tierSizesProp = [int(next(inFile)) for tr in range(nTiersProp)]
-        scoresProp = [int(next(inFile)) for tr in range(nTiersProp)]
+        scoresProp = [float(next(inFile)) for tr in range(nTiersProp)]
         nTiersRec = int(next(inFile))
         tierSizesRec = [int(next(inFile)) for tr in range(nTiersRec)]
-        scoresRec = [int(next(inFile)) for tr in range(nTiersRec)]
+        scoresRec = [float(next(inFile)) for tr in range(nTiersRec)]
         matchingConfigs.append(MatchingConfig(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, scoresRec))
 
         nIters = int(next(inFile))
