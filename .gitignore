@@ -28,7 +28,7 @@
 
 # Executables
 *.exe
-*.out
+# *.out # for output files
 *.app
 
 # Temp files
