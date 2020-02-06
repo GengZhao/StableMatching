@@ -38,6 +38,7 @@ Agent::Agent(
     poolSizesByTier(partnerSideTierSizes),
     invHappiness(numeric_limits<double>::max()),
     simulatedRankOfPartner(0),
+    preferencesCompleted(false),
     index(index), score(score), tier(tier)
 {
     // if long side proposes or if proposals run long, pre-generate all preferences by exp distribution for proposers
@@ -73,6 +74,7 @@ Agent::Agent(
 
 void Agent::completePreferences()
 {
+    if (this->preferencesCompleted) return;
     switch (this->role)
     {
         case PROPOSER:
@@ -103,17 +105,36 @@ void Agent::completePreferences()
             sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) { return p1.invHappiness < p2.invHappiness; });
             break;
     }
+    this->preferencesCompleted = true;
 }
 
 // should be called after a normal run
-void Agent::reverseRole()
+void Agent::reverseRole(const bool preservePartner)
 {
+    this->completePreferences();
+
     this->roleReversed = true;
+    if (!preservePartner) {
+        this->prevRunPartner = this->curPartner;
+        this->curPartner = NULL;
+    } else if (this->curPartner) {
+        this->invHappiness = this->invHappinessForPartners[this->curPartner->index];
+    }
+    this->poolSizesByTier = this->partnerSideTierSizes;
+}
+
+void Agent::reset()
+{
+    this->roleReversed = false;
     this->prevRunPartner = this->curPartner;
     this->curPartner = NULL;
+    this->proposalsMade.clear();
     this->poolSizesByTier = this->partnerSideTierSizes;
-
-    this->completePreferences();
+    this->sumScoresForPool = inner_product(this->partnerSideTierSizes.begin(), this->partnerSideTierSizes.end(),
+                this->partnerSideScores.begin(), 0.0);
+    this->poolSize = accumulate(this->partnerSideTierSizes.begin(), this->partnerSideTierSizes.end(), 0);
+    this->invHappiness = numeric_limits<double>::max();
+    this->simulatedRankOfPartner = 0;
 }
 
 /** Manipulation and key operations **/
@@ -213,6 +234,10 @@ bool Agent::hasUniqueMatch()
 int Agent::rankOfPartnerForProposer()
 {
     assert(this->role == PROPOSER);
+    assert(this->curPartner); // undefined if unmatched
+    if (this->pregeneratePreferences) {
+        return distance(this->preferences.begin(), find_if(this->preferences.begin(), this->preferences.end(), [&](PreferenceEntry pe) { return pe.index == this->curPartner->index; })) + 1;
+    }
     return this->proposalsMade.size();
 }
 
@@ -220,6 +245,9 @@ int Agent::rankOfPartnerForReceiver(mt19937& rng)
 {
     assert(this->role == RECEIVER);
     assert(this->curPartner); // undefined if unmatched
+    if (this->pregeneratePreferences) {
+        return distance(this->preferences.begin(), find_if(this->preferences.begin(), this->preferences.end(), [&](PreferenceEntry pe) { return pe.index == this->curPartner->index; })) + 1;
+    }
     if (this->simulatedRankOfPartner > 0)
         return this->simulatedRankOfPartner;
 

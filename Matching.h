@@ -40,7 +40,9 @@ class Matching
         const bool pregeneratePreferences; // for long running proposing chain
         const bool savePreferences; // for generating full preferences
 
-        void reverseRun();
+        bool recordingProposalCounts;
+
+        void printMatchSetupInfo();
 
     public:
         int totalNumProposals; // for convenience
@@ -58,10 +60,13 @@ class Matching
         );
         ~Matching();
         void run();
+        void reverseRun();
+        void runExperimental();
         std::vector<double> avgRankForProposerByTier(); // only counting matched proposers
         std::vector<double> avgRankForReceiverByTier(); // only counting matched receivers (simulated)
         std::vector<std::vector<int> > reverseRunCountUniquePartners();
         void result();
+        void resetState(); // will preserve agents' generated preferences
 };
 
 #endif

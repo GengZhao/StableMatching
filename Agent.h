@@ -45,6 +45,7 @@ class Agent
 
         int simulatedRankOfPartner; // only for receivers (simulation cache)
         std::vector<PreferenceEntry> preferences; // only for proposers for performance reason when long side proposes
+        bool preferencesCompleted; // avoid re-completion of preferences data structures
         std::map<int, double> invHappinessForPartners; // only for receivers to handle comparison
 
         void completePreferences();
@@ -70,7 +71,8 @@ class Agent
         ~Agent() {};
         Agent* propose(std::vector<Agent*>& fullPool, std::mt19937& rng);
         Agent* handleProposal(Agent*, std::mt19937& rng); // returns the rejected agent
-        void reverseRole();
+        void reverseRole(const bool preservePartner=false);
+        void reset();
 
         Agent* matchedPartner();
         bool hasUniqueMatch();

@@ -30,9 +30,10 @@ Matching::Matching(
     numProposalsMadeByPropTier(nTiersProp, 0),
     numMatchesByPropTier(nTiersProp, 0),
     numMatchesByRecTier(nTiersRec, 0),
-    totalNumProposals(0),
     pregeneratePreferences(pregeneratePreferences),
-    savePreferences(savePreferences)
+    savePreferences(savePreferences),
+    recordingProposalCounts(true),
+    totalNumProposals(0)
 {
     assert(this->nTiersProp == (int) tierSizesProp.size());
     assert(this->nTiersRec == (int) tierSizesRec.size());
@@ -45,7 +46,6 @@ Matching::Matching(
         for (int i = 0; i < tierSizesProp[tp]; i++) {
             Agent* prop = new Agent(indexProp, scoresProp[tp], tp, tierSizesRec, scoresRec, PROPOSER, longSideProposing || pregeneratePreferences, savePreferences, verbose);
             this->agentsProp.push_back(prop);
-            this->agentsToPropose.push(prop);
             indexProp++;
         }
     }
@@ -68,6 +68,9 @@ Matching::~Matching()
 
 void Matching::run()
 {
+    assert(this->agentsToPropose.empty());
+    for (Agent* p : this->agentsProp) this->agentsToPropose.push(p);
+
     while (!(this->agentsToPropose.empty())) {
         Agent* proposer = this->agentsToPropose.front();
         this->agentsToPropose.pop();
@@ -98,6 +101,7 @@ void Matching::run()
 void Matching::reverseRun()
 {
     assert(this->pregeneratePreferences && this->savePreferences);
+    this->recordingProposalCounts = false;
 
     assert(this->agentsToPropose.empty());
     for (Agent* p : this->agentsProp) p->reverseRole();
@@ -112,9 +116,100 @@ void Matching::reverseRun()
         Agent* receiver = proposer->propose(this->agentsProp, this->rng);
         if (receiver) {
             Agent* rejected = receiver->handleProposal(proposer, this->rng);
-            if (rejected) this->agentsToPropose.push(rejected);
+            if (rejected) {
+                this->agentsToPropose.push(rejected);
+                if (rejected->tier != proposer->tier) {
+                    this->matchCountMatrix[receiver->tier][proposer->tier]++;
+                    this->matchCountMatrix[receiver->tier][rejected->tier]--;
+                    this->numMatchesByRecTier[proposer->tier]++;
+                    this->numMatchesByRecTier[rejected->tier]--;
+                }
+            } else {
+                this->matchCountMatrix[receiver->tier][proposer->tier]++;
+                this->numMatchesByPropTier[receiver->tier]++;
+                this->numMatchesByRecTier[proposer->tier]++;
+            }
         }
     }
+}
+
+void Matching::runExperimental()
+{
+    assert(this->pregeneratePreferences && this->savePreferences);
+    this->recordingProposalCounts = false;
+
+    // forward proposing for tier 1 proposers
+    for (int i = 0; i < this->tierSizesProp[0]; i++) {
+        this->agentsToPropose.push(this->agentsProp[i]);
+    }
+
+    // run regular deferred acceptance for tier 1
+    while (!(this->agentsToPropose.empty())) {
+        Agent* proposer = this->agentsToPropose.front();
+        this->agentsToPropose.pop();
+        Agent* receiver = proposer->propose(this->agentsRec, this->rng);
+        if (receiver) {
+            Agent* rejected = receiver->handleProposal(proposer, this->rng);
+            if (rejected) {
+                this->agentsToPropose.push(rejected);
+                if (rejected->tier != proposer->tier) {
+                    this->matchCountMatrix[proposer->tier][receiver->tier]++;
+                    this->matchCountMatrix[rejected->tier][receiver->tier]--;
+                    this->numMatchesByPropTier[proposer->tier]++;
+                    this->numMatchesByPropTier[rejected->tier]--;
+                }
+            } else {
+                this->matchCountMatrix[proposer->tier][receiver->tier]++;
+                this->numMatchesByPropTier[proposer->tier]++;
+                this->numMatchesByRecTier[receiver->tier]++;
+            }
+        }
+    }
+
+    // reverse proposing direction
+    for (Agent* p : this->agentsProp) p->reverseRole(true); // preserve currently matched partner
+    for (Agent* r : this->agentsRec) {
+        if (!(r->matchedPartner())) this->agentsToPropose.push(r);
+        r->reverseRole(true); // preserve currently matched partner
+    }
+
+    // rerun deferred acceptance
+    while (!(this->agentsToPropose.empty())) {
+        Agent* proposer = this->agentsToPropose.front();
+        this->agentsToPropose.pop();
+        Agent* receiver = proposer->propose(this->agentsProp, this->rng);
+        if (receiver) {
+            Agent* rejected = receiver->handleProposal(proposer, this->rng);
+            if (rejected) {
+                this->agentsToPropose.push(rejected);
+                if (rejected->tier != proposer->tier) {
+                    this->matchCountMatrix[receiver->tier][proposer->tier]++;
+                    this->matchCountMatrix[receiver->tier][rejected->tier]--;
+                    this->numMatchesByRecTier[proposer->tier]++;
+                    this->numMatchesByRecTier[rejected->tier]--;
+                }
+            } else {
+                this->matchCountMatrix[receiver->tier][proposer->tier]++;
+                this->numMatchesByPropTier[receiver->tier]++;
+                this->numMatchesByRecTier[proposer->tier]++;
+            }
+        }
+    }
+}
+
+void Matching::resetState()
+{
+    assert(this->agentsToPropose.empty());
+    for (Agent* p : this->agentsProp) p->reset();
+    for (Agent* r : this->agentsRec) r->reset();
+
+    this->proposalCountMatrix = vector<vector<int> >(this->nTiersProp, vector<int>(this->nTiersRec, 0));
+    this->matchCountMatrix = vector<vector<int> >(this->nTiersProp, vector<int>(this->nTiersRec, 0));
+    this->numProposalsMadeByPropTier = vector<int>(this->nTiersProp, 0);
+    this->numMatchesByPropTier = vector<int>(this->nTiersProp, 0);
+    this->numMatchesByRecTier = vector<int>(this->nTiersRec, 0);
+    this->recordingProposalCounts = true;
+    this->totalNumProposals = 0;
 }
 
 /** Result computation **/
@@ -122,10 +217,30 @@ void Matching::reverseRun()
 vector<double> Matching::avgRankForProposerByTier()
 {
     vector<double> avgRanks;
-    for (int tp = 0; tp < this->nTiersProp; tp++) {
-        avgRanks.push_back((this->numProposalsMadeByPropTier[tp] -
-                    (this->tierSizesProp[tp] - this->numMatchesByPropTier[tp]) * this->nAgentsRec) /
-                (double) this->numMatchesByPropTier[tp]);
+    if (this->recordingProposalCounts) {
+        for (int tp = 0; tp < this->nTiersProp; tp++) {
+            avgRanks.push_back((this->numProposalsMadeByPropTier[tp] -
+                        (this->tierSizesProp[tp] - this->numMatchesByPropTier[tp]) * this->nAgentsRec) /
+                    (double) this->numMatchesByPropTier[tp]);
+        }
+    } else { // not recording proposals, then preferences must be pregenerated
+        int index = 0;
+        for (int tp = 0; tp < this->nTiersProp; tp++) {
+            if (this->numMatchesByPropTier[tp] == 0) {
+                avgRanks.push_back(0.0);
+                cerr << "[WARNING] Proposing side tier " << tp << " has received no proposals." << endl;
+                index += this->tierSizesProp[tp];
+                continue;
+            }
+            double avgRankInTier = 0.0;
+            for (int i = 0; i < this->tierSizesProp[tp]; i++) {
+                if (this->agentsProp[index]->matchedPartner()) {
+                    avgRankInTier += this->agentsProp[index]->rankOfPartnerForProposer() / (double) this->numMatchesByPropTier[tp];
+                }
+                index++;
+            }
+            avgRanks.push_back(avgRankInTier);
+        }
     }
     return avgRanks;
 }
@@ -165,9 +280,8 @@ vector<vector<int> > Matching::reverseRunCountUniquePartners()
     return uniquePartners;
 }
 
-void Matching::result()
+void Matching::printMatchSetupInfo()
 {
-    cout << "Result summary" << endl << "=============="  << endl;
     cout << "Proposer tier sizes:";
     printVectorTsv(this->tierSizesProp);
     cout << "Receiver tier sizes:";
@@ -176,6 +290,12 @@ void Matching::result()
     printVectorTsv(this->scoresProp);
     cout << "Receiver scores:";
     printVectorTsv(this->scoresRec);
+}
+
+void Matching::result()
+{
+    cout << "Result summary" << endl << "=============="  << endl;
+    this->printMatchSetupInfo();
 
     if (this->verbose) {
         cout << "Matched pairs:" << endl;
@@ -191,14 +311,18 @@ void Matching::result()
         }
     }
 
-    cout << endl << "Proposal counts:" << endl;
-    printVector2DTsv(this->proposalCountMatrix);
+    if (this->recordingProposalCounts) {
+        cout << endl << "Proposal counts:" << endl;
+        printVector2DTsv(this->proposalCountMatrix);
+    }
 
     cout << endl << "Match counts:" << endl;
     printVector2DTsv(this->matchCountMatrix);
 
-    cout << endl << "Proposal counts by proposer tier:" << endl;
-    printVectorTsv(this->numProposalsMadeByPropTier);
+    if (this->recordingProposalCounts) {
+        cout << endl << "Proposal counts by proposer tier:" << endl;
+        printVectorTsv(this->numProposalsMadeByPropTier);
+    }
 
     cout << endl << "Match counts by proposer tier:" << endl;
     printVectorTsv(this->numMatchesByPropTier);
