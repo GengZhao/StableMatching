@@ -51,5 +51,22 @@ def readUniqueCountResultFromFile(inFile):
 
     return (matchingConfigs, proposerUniquePartnerCountByTier)
 
+def readMatchingStatisticsFromFile(inFile):
+    matchingConfigs = []
+    matchingStatistics = []
+    for l in inFile:
+        nTiersProp = int(l)
+        tierSizesProp = [int(next(inFile)) for tr in range(nTiersProp)]
+        scoresProp = [float(next(inFile)) for tr in range(nTiersProp)]
+        nTiersRec = int(next(inFile))
+        tierSizesRec = [int(next(inFile)) for tr in range(nTiersRec)]
+        scoresRec = [float(next(inFile)) for tr in range(nTiersRec)]
+        matchingConfigs.append(MatchingConfig(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, scoresRec))
+
+        nIters = int(next(inFile))
+        matchingStatistics.append([int(next(inFile)) for i in range(nIters)])
+
+    return (matchingConfigs, matchingStatistics)
+
 if __name__ == '__main__':
     dataFile = open(sys.argv[-1], 'r')

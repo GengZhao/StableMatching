@@ -280,6 +280,11 @@ vector<vector<int> > Matching::reverseRunCountUniquePartners()
     return uniquePartners;
 }
 
+vector<vector<int> > Matching::getMatchCountMatrix()
+{
+    return this->matchCountMatrix;
+}
+
 void Matching::printMatchSetupInfo()
 {
     cout << "Proposer tier sizes:";
@@ -335,5 +340,4 @@ void Matching::result()
 
     cout << endl << "Avg rank of match by receiver tier:" << endl;
     printVectorTsv(this->avgRankForReceiverByTier());
-
 }
