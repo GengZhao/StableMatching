@@ -29,6 +29,7 @@ class Agent
 
         const std::vector<int> partnerSideTierSizes;
         const std::vector<double> partnerSideScores;
+        const int partnerSideNAgents;
         const int partnerSideNTiers;
         const Role role;
         bool roleReversed;
@@ -79,6 +80,7 @@ class Agent
 
         int rankOfPartnerForProposer(); // only for proposers
         int rankOfPartnerForReceiver(std::mt19937& rng); // only for receivers, supplying the proposers vector just for convenience
+        int numProposalsReceived(); // only for receivers
 };
 
 #endif

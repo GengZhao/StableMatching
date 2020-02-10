@@ -285,6 +285,28 @@ vector<vector<int> > Matching::getMatchCountMatrix()
     return this->matchCountMatrix;
 }
 
+void Matching::printNProposalsRec(ostream& os)
+{
+    for (Agent* r : this->agentsRec) {
+        if (r->matchedPartner()) {
+            os << r->numProposalsReceived() << endl;
+        } else {
+            os << -1 << endl;
+        }
+    }
+}
+
+void Matching::printRanksRec(ostream& os)
+{
+    for (Agent* r : this->agentsRec) {
+        if (r->matchedPartner()) {
+            os << r->rankOfPartnerForReceiver(this->rng) << endl;
+        } else {
+            os << -1 << endl;
+        }
+    }
+}
+
 void Matching::printMatchSetupInfo()
 {
     cout << "Proposer tier sizes:";

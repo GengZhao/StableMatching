@@ -28,12 +28,13 @@ Agent::Agent(
     verbose(verbose),
     partnerSideTierSizes(partnerSideTierSizes),
     partnerSideScores(partnerSideScores),
+    partnerSideNAgents(accumulate(partnerSideTierSizes.begin(), partnerSideTierSizes.end(), 0)),
     partnerSideNTiers(partnerSideTierSizes.size()),
     role(role), roleReversed(false),
     pregeneratePreferences(pregeneratePreferences), savePreferences(savePreferences),
     sumScoresForPool(inner_product(partnerSideTierSizes.begin(), partnerSideTierSizes.end(),
                 partnerSideScores.begin(), 0.0)),
-    poolSize(accumulate(partnerSideTierSizes.begin(), partnerSideTierSizes.end(), 0)),
+    poolSize(partnerSideNAgents),
     curPartner(NULL), prevRunPartner(NULL),
     poolSizesByTier(partnerSideTierSizes),
     invHappiness(numeric_limits<double>::max()),
@@ -132,7 +133,7 @@ void Agent::reset()
     this->poolSizesByTier = this->partnerSideTierSizes;
     this->sumScoresForPool = inner_product(this->partnerSideTierSizes.begin(), this->partnerSideTierSizes.end(),
                 this->partnerSideScores.begin(), 0.0);
-    this->poolSize = accumulate(this->partnerSideTierSizes.begin(), this->partnerSideTierSizes.end(), 0);
+    this->poolSize = this->partnerSideNAgents;
     this->invHappiness = numeric_limits<double>::max();
     this->simulatedRankOfPartner = 0;
 }
@@ -222,6 +223,11 @@ void Agent::matchWith(Agent* agent)
 Agent* Agent::matchedPartner()
 {
     return this->curPartner;
+}
+
+int Agent::numProposalsReceived()
+{
+    return this->partnerSideNAgents - accumulate(this->poolSizesByTier.begin(), this->poolSizesByTier.end(), 0);
 }
 
 // not counting the unmatched case
