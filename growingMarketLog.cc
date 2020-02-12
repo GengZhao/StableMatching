@@ -16,14 +16,14 @@ int main()
     vector<int> tierSizesProp{4, 12};
     vector<int> tierSizesRec{1, 5, 10};
     vector<double> scoresProp{3.0, 1.0};
-    vector<double> scoresRec{1.0, 2.0, 3.0};
+    vector<double> scoresRec{3.0, 2.0, 1.0};
     int nTiersProp = tierSizesProp.size();
     int nTiersRec = tierSizesRec.size();
 
-    int nStepsInPow2 = 12;
+    int nStepsInPow2 = 16;
 
     int nThreads = 8;
-    int nIter = 50;
+    int nIter = 75;
 
     ofstream outFile;
     outFile.open("fixed_tiers_growing_market-" + getTime() + ".out");
@@ -77,6 +77,7 @@ int main()
                 tierSizesProp.begin(), bind1st(multiplies<int>(), 2));
         transform(tierSizesRec.begin(), tierSizesRec.end(),
                 tierSizesRec.begin(), bind1st(multiplies<int>(), 2));
+        cout << "Step: " << s << endl;
     }
     outFile.close();
     return 0;

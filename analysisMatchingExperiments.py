@@ -69,11 +69,16 @@ def readMatchingStatisticsFromFile(inFile):
     return (matchingConfigs, matchingStatistics)
 
 if __name__ == '__main__':
+    '''
+    Main program to analyze data and produce plots. Hacky at some places as I hardcoded some specific data shapes for convenience.
+    '''
     def reformat_large_tick_values(tick_val, pos):
-        """
-        Turns large tick values (in the billions, millions and thousands) such as 4500 into 4.5K and also appropriately turns 4000 into 4K (no zero after the decimal).
+        '''
+        Turns large tick values (in the billions, millions and thousands) such as 4500 into 4.5K and also appropriately turns
+        4000 into 4K (no zero after the decimal).
+
         Adopted from https://dfrieds.com/data-visualizations/how-format-large-tick-values
-        """
+        '''
         if tick_val >= 1000000000:
             val = round(tick_val/1000000000, 1)
             new_tick_format = '{:}B'.format(val)
@@ -102,6 +107,9 @@ if __name__ == '__main__':
 
         return new_tick_format
 
+    '''
+    Adopted based on http://aeturrell.com/2018/01/31/publication-quality-plots-in-python/
+    '''
     plt.rc('font', family='serif')
     plt.rc('xtick', labelsize=13)
     plt.rc('ytick', labelsize=13)
@@ -111,7 +119,7 @@ if __name__ == '__main__':
     plt.rc('lines', linewidth=1.0)
     plt.rc('lines', markersize=3.5)
     plt.rc('figure', autolayout=True)
-    # plt.rc('figure', figsize=[7.2, 5.4])
+    plt.rc('figure', figsize=[6.4, 4.8])
     colourWheel =['#329932',
                 '#ff6961',
                 '#6a3d9a',
@@ -128,7 +136,6 @@ if __name__ == '__main__':
                 '#b2182b',
                 '#053061']
 
-    '''
     ## Growing market exponential
     m1,p1,r1 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:06:27.out', 'r'))
     m2,p2,r2 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:26:18.out', 'r'))
@@ -157,10 +164,15 @@ if __name__ == '__main__':
     plog = np.concatenate((np.concatenate((p1, p2, p3, p4), 2), np.concatenate((p5, p6, p7, p8), 2)), 0)
     rlog = np.concatenate((np.concatenate((r1, r2, r3, r4), 2), np.concatenate((r5, r6, r7, r8), 2)), 0)
 
-    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)) * 2.5625 * 0.4, ls='--', color=colourWheel[0])
-    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)) * 2.5625 * 1.2, ls='--', color=colourWheel[1])
-    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)/16.0) * 2.5625 * 0.4, ls=':', color=colourWheel[0])
-    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)/16.0) * 2.5625 * 1.2, ls=':', color=colourWheel[1])
+    alphaV = np.array([1.0, 2.0, 3.0])
+    betaV = np.array([3.0, 1.0])
+    epsilonV = np.array([1.0/16, 5.0/16, 10.0/16])
+    deltaV = np.array([0.25, 0.75])
+
+    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)) * (alphaV.dot(epsilonV)) / (deltaV.dot(1.0/betaV)) / 3, ls='--', color=colourWheel[0])
+    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)) * (alphaV.dot(epsilonV)) / (deltaV.dot(1.0/betaV)), ls='--', color=colourWheel[1])
+    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)/16) * (alphaV.dot(epsilonV)) / (deltaV.dot(1.0/betaV)) / 3, ls=':', color=colourWheel[0])
+    plt.plot(np.logspace(4,19,16,base=2),np.log(np.logspace(4,19,16,base=2)/16) * (alphaV.dot(epsilonV)) / (deltaV.dot(1.0/betaV)), ls=':', color=colourWheel[1])
 
     series = []
     for j in range(plog.shape[1]):
@@ -173,12 +185,12 @@ if __name__ == '__main__':
     plt.yscale('log')
     plt.show()
 
-    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)) * 1.25/3, ls='--', color=colourWheel[0])
-    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)) * 1.25/2, ls='--', color=colourWheel[1])
-    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)) * 1.25, ls='--', color=colourWheel[2])
-    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)/16.0) * 1.25/3, ls=':', color=colourWheel[0])
-    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)/16.0) * 1.25/2, ls=':', color=colourWheel[1])
-    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)/16.0) * 1.25, ls=':', color=colourWheel[2])
+    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)) * deltaV.dot(betaV) * deltaV.dot(1.0/betaV) / 3, ls='--', color=colourWheel[0])
+    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)) * deltaV.dot(betaV) * deltaV.dot(1.0/betaV) / 2, ls='--', color=colourWheel[1])
+    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)) * deltaV.dot(betaV) * deltaV.dot(1.0/betaV), ls='--', color=colourWheel[2])
+    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)/16) * deltaV.dot(betaV) * deltaV.dot(1.0/betaV) / 3, ls=':', color=colourWheel[0])
+    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)/16) * deltaV.dot(betaV) * deltaV.dot(1.0/betaV) / 2, ls=':', color=colourWheel[1])
+    plt.plot(np.logspace(4,19,16,base=2),np.logspace(4,19,16,base=2) / np.log(np.logspace(4,19,16,base=2)/16) * deltaV.dot(betaV) * deltaV.dot(1.0/betaV), ls=':', color=colourWheel[2])
 
     series = []
     for j in range(rlog.shape[1]):
@@ -190,9 +202,7 @@ if __name__ == '__main__':
     plt.xscale('log')
     plt.yscale('log')
     plt.show()
-    '''
 
-    '''
     series = []
     series.append(plt.plot(np.logspace(4,19,16,base=2),[np.mean(plog[i][1]) / np.mean(plog[i][0]) for i in range(plog.shape[0])], color=colourWheel[0], marker='.')[0])
     plt.hlines(3.0, plt.xlim()[0], plt.xlim()[1], color=colourWheel[0], linestyles=':')
@@ -213,7 +223,6 @@ if __name__ == '__main__':
     plt.legend(series, ['Tier 2 : Tier 1', 'Tier 3 : Tier 1'], loc='lower right')
     plt.xscale('log')
     plt.show()
-    '''
 
     '''
     ## Varying tier configurations
@@ -388,7 +397,6 @@ if __name__ == '__main__':
     plt.show()
     '''
 
-    '''
     ## Distribution of matched pairs
     mgn1,m11gn1 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-06_00:03:07.out', 'r'))
     mgn2,m11gn2 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-06_23:49:26.out', 'r'))
@@ -417,5 +425,125 @@ if __name__ == '__main__':
 
     # Varying scores
     # TODO
-    '''
+
+    ## Varying both parameters
+    # Tiers on women
+    plt.rc('figure', figsize=[11.2, 4.8])
+
+    mmpvae,pmpvae,rmpvae = readMatchingResultFromFile(open('varying_both_tier_params-2020-02-10_22:32:39.out', 'r'))
+    p1mpvae = np.array(pmpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
+    r1mpvae = np.array(rmpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
+    r2mpvae = np.array(rmpvae)[:,1,:].mean(1).reshape((39,39))[:-2,:].T
+    alphas = np.tile(np.linspace(1,10,37), [39,1])
+    epsilons = np.tile(np.linspace(0.975,0.025,39).reshape((-1,1)), [1,37])
+
+    plt.subplot(1, 2, 1)
+    avgMs = alphas * epsilons * np.log(1000)
+    plt.imshow(avgMs)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.xlabel("alpha_1")
+    plt.ylabel("epsilon_1")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(p1mpvae)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.colorbar()
+    plt.xlabel("alpha_1")
+    plt.ylabel("epsilon_1")
+    plt.show()
+
+    plt.subplot(1, 2, 1)
+    avgW1s = 1000.0 / alphas / np.log(1000)
+    plt.imshow(avgW1s )
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.xlabel("alpha_1")
+    plt.ylabel("epsilon_1")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(r2mpvae)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.colorbar()
+    plt.xlabel("alpha_1")
+    plt.ylabel("epsilon_1")
+    plt.show()
+
+    plt.subplot(1, 2, 1)
+    avgW2s = np.ones((39, 37)) * 1000.0 / np.log(1000)
+    plt.imshow(avgW2s)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.xlabel("alpha_1")
+    plt.ylabel("epsilon_1")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(r1mpvae)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.colorbar()
+    plt.xlabel("alpha_1")
+    plt.ylabel("epsilon_1")
+    plt.show()
+
+    # Tiers on men
+    mwpvae,pwpvae,rwpvae = readMatchingResultFromFile(open('varying_both_tier_params_rev-2020-02-10_22:49:59.out', 'r'))
+    p1wpvae = np.array(pwpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
+    p2wpvae = np.array(pwpvae)[:,1,:].mean(1).reshape((39,39))[:-2,:].T
+    r1wpvae = np.array(rwpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
+    betas = np.tile(np.linspace(1,10,37), [39,1])
+    deltas = np.tile(np.linspace(0.975,0.025,39).reshape((-1,1)), [1,37])
+
+    plt.subplot(1, 2, 1)
+    avgM1s = 1.0 / (deltas / betas + 1 - deltas) * np.log(1000) / betas
+    plt.imshow(avgM1s)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.xlabel("beta_1")
+    plt.ylabel("delta_1")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(p2wpvae)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.colorbar()
+    plt.xlabel("beta_1")
+    plt.ylabel("delta_1")
+    plt.show()
+
+    plt.subplot(1, 2, 1)
+    avgM2s = 1.0 / (deltas / betas + 1 - deltas) * np.log(1000)
+    plt.imshow(avgM2s)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.xlabel("beta_1")
+    plt.ylabel("delta_1")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(p1wpvae)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.colorbar()
+    plt.xlabel("beta_1")
+    plt.ylabel("delta_1")
+    plt.show()
+
+    plt.subplot(1, 2, 1)
+    avgWs = 1000.0 * (deltas * betas + 1 - deltas) * (deltas / betas + 1 - deltas) / np.log(1000)
+    plt.imshow(avgWs)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.xlabel("beta_1")
+    plt.ylabel("delta_1")
+
+    plt.subplot(1, 2, 2)
+    plt.imshow(r1wpvae)
+    plt.xticks(np.linspace(0,36,10), [int(x) for x in np.linspace(1,10,10)])
+    plt.yticks(np.linspace(3,35,9), ['{:.1f}'.format(x) for x in np.linspace(0.9,0.1,9)])
+    plt.colorbar()
+    plt.xlabel("beta_1")
+    plt.ylabel("delta_1")
+    plt.show()
 

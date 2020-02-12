@@ -2,7 +2,7 @@ CXX=g++
 OPTFLAG=-O3
 CXXFLAGS=-Wall -g $(OPTFLAG) -std=c++11
 
-EXECUTABLES=main growingMarketLin growingMarketLog varyingTier uniquePartnerCount imbalancedMarket distributionOfPairs
+EXECUTABLES=main growingMarketLin growingMarketLog varyingTier varyingTierBothParams uniquePartnerCount imbalancedMarket distributionOfPairs
 
 all: $(EXECUTABLES)
 
@@ -27,6 +27,9 @@ uniquePartnerCount: uniquePartnerCount.o Matching.o Agent.o utils.o
 varyingTier: varyingTier.o Matching.o Agent.o utils.o
 	$(CXX) $(CXXFLAGS) -pthread -o varyingTier varyingTier.o Matching.o Agent.o utils.o
 
+varyingTierBothParams: varyingTierBothParams.o Matching.o Agent.o utils.o
+	$(CXX) $(CXXFLAGS) -pthread -o varyingTierBothParams varyingTierBothParams.o Matching.o Agent.o utils.o
+
 main.o: main.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c main.cc
 
@@ -44,6 +47,9 @@ imbalancedMarket.o: imbalancedMarket.cc Matching.h Agent.h utils.h
 
 varyingTier.o: varyingTier.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c varyingTier.cc
+
+varyingTierBothParams.o: varyingTierBothParams.cc Matching.h Agent.h utils.h
+	$(CXX) $(CXXFLAGS) -c varyingTierBothParams.cc
 
 uniquePartnerCount.o: uniquePartnerCount.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c uniquePartnerCount.cc
