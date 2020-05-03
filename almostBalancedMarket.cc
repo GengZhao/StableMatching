@@ -29,8 +29,8 @@ int main()
 
     ofstream outFileAvgRank, outFileMatchedCount;
     string timeStr = getTime();
-    outFileAvgRank.open("almost_balanced_market_avg_rank-" + timeStr + ".out");
-    outFileMatchedCount.open("almost_balanced_market_matched_count-" + timeStr + ".out");
+    outFileAvgRank.open("Outputs/almost_balanced_market_avg_rank-" + timeStr + ".out");
+    outFileMatchedCount.open("Outputs/almost_balanced_market_matched_count-" + timeStr + ".out");
     for (int s = 0; s < nStepsN; s++) {
 
         outFileAvgRank << nTiersProp << "\n";

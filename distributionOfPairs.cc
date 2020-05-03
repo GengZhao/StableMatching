@@ -29,7 +29,7 @@ int main()
     ofstream outFileGrowN, outFileGrowScores;
 
     // increase size of market
-    outFileGrowN.open("distribution_of_pairs_grow_market-" + getTime() + ".out");
+    outFileGrowN.open("Outputs/distribution_of_pairs_grow_market-" + getTime() + ".out");
     for (int s = 0; s < nStepsN; s++) {
 
         outFileGrowN << nTiersProp << "\n";
@@ -76,7 +76,7 @@ int main()
     scoresProp = vector<double>{1.0, 1.0};
     scoresRec = vector<double>{1.0, 1.0};
     // varying scores
-    outFileGrowScores.open("distribution_of_pairs_vary_scores-" + getTime() + ".out");
+    outFileGrowScores.open("Outputs/distribution_of_pairs_vary_scores-" + getTime() + ".out");
     for (int s1 = 0; s1 < nStepsScores; s1++) {
         for (int s2 = 0; s2 < nStepsScores; s2++) {
             outFileGrowScores << nTiersProp << "\n";

@@ -31,7 +31,7 @@ int main()
     ofstream outFileTierSizes, outFileScores;
 
     // varying tier sizes
-    outFileTierSizes.open("fixed_market_varying_tier_sizes-" + getTime() + ".out");
+    outFileTierSizes.open("Outputs/fixed_market_varying_tier_sizes-" + getTime() + ".out");
     for (int s = 0; s < nStepsTierSize; s++) {
         outFileTierSizes << nTiersProp << "\n";
         printVector(tierSizesProp, outFileTierSizes);
@@ -85,7 +85,7 @@ int main()
     outFileTierSizes.close();
 
     // varying scores
-    outFileScores.open("fixed_market_varying_scores-" + getTime() + ".out");
+    outFileScores.open("Outputs/fixed_market_varying_scores-" + getTime() + ".out");
     for (int s = 0; s < nStepsScore; s++) {
         outFileScores << nTiersProp << "\n";
         printVector(defaultTierSizesProp, outFileScores);

@@ -26,7 +26,7 @@ int main()
     int nIter = 125;
 
     ofstream outFile;
-    outFile.open("imbalanced_market-" + getTime() + ".out");
+    outFile.open("Outputs/imbalanced_market-" + getTime() + ".out");
     for (int s : tierSizeRecRange) {
         vector<int> tierSizesRec{s};
 

@@ -26,7 +26,7 @@ int main()
     int nIter = 75;
 
     ofstream outFile;
-    outFile.open("fixed_tiers_growing_market-" + getTime() + ".out");
+    outFile.open("Outputs/fixed_tiers_growing_market-" + getTime() + ".out");
     for (int s = 0; s < nStepsInPow2; s++) {
         outFile << nTiersProp << "\n";
         printVector(tierSizesProp, outFile);

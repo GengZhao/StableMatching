@@ -26,7 +26,7 @@ int main()
     int nIter = 125;
 
     ofstream outFile;
-    outFile.open("unique_partner_count-" + getTime() + ".out");
+    outFile.open("Outputs/unique_partner_count-" + getTime() + ".out");
     for (int s : tierSizeRecRange) {
         vector<int> tierSizesRec{s};
 

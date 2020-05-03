@@ -139,14 +139,14 @@ if __name__ == '__main__':
 
     '''
     ## Growing market exponential
-    m1,p1,r1 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:06:27.out', 'r'))
-    m2,p2,r2 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:26:18.out', 'r'))
-    m3,p3,r3 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:27:55.out', 'r'))
-    m4,p4,r4 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:29:31.out', 'r'))
-    m5,p5,r5 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_01:19:03.out', 'r'))
-    m6,p6,r6 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_19:27:15.out', 'r'))
-    m7,p7,r7 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_19:28:09.out', 'r'))
-    m8,p8,r8 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_19:33:01.out', 'r'))
+    m1,p1,r1 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_00:06:27.out', 'r'))
+    m2,p2,r2 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_00:26:18.out', 'r'))
+    m3,p3,r3 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_00:27:55.out', 'r'))
+    m4,p4,r4 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_00:29:31.out', 'r'))
+    m5,p5,r5 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_01:19:03.out', 'r'))
+    m6,p6,r6 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_19:27:15.out', 'r'))
+    m7,p7,r7 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_19:28:09.out', 'r'))
+    m8,p8,r8 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market-2020-01-30_19:33:01.out', 'r'))
     p1 = np.array(p1)
     p2 = np.array(p2)
     p3 = np.array(p3)
@@ -227,17 +227,17 @@ if __name__ == '__main__':
     plt.show()
 
     ## Varying tier configurations
-    mvs1,pvs1,rvs1 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-07_23:55:01.out', 'r'))
-    mvs2,pvs2,rvs2 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-07_23:20:17.out', 'r'))
-    # mvs1,pvs1,rvs1 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-01_22:32:51.out', 'r'))
-    # mvs2,pvs2,rvs2 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-02_16:54:42.out', 'r'))
-    # mvs3,pvs3,rvs3 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-02_17:13:34.out', 'r'))
-    # mvs4,pvs4,rvs4 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-03_20:37:58.out', 'r'))
+    mvs1,pvs1,rvs1 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_scores-2020-02-07_23:55:01.out', 'r'))
+    mvs2,pvs2,rvs2 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_scores-2020-02-07_23:20:17.out', 'r'))
+    # mvs1,pvs1,rvs1 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_scores-2020-02-01_22:32:51.out', 'r'))
+    # mvs2,pvs2,rvs2 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_scores-2020-02-02_16:54:42.out', 'r'))
+    # mvs3,pvs3,rvs3 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_scores-2020-02-02_17:13:34.out', 'r'))
+    # mvs4,pvs4,rvs4 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_scores-2020-02-03_20:37:58.out', 'r'))
 
-    mvt1,pvt1,rvt1 = readMatchingResultFromFile(open('fixed_market_varying_tier_sizes-2020-02-01_22:32:51.out', 'r'))
-    mvt2,pvt2,rvt2 = readMatchingResultFromFile(open('fixed_market_varying_tier_sizes-2020-02-02_16:47:20.out', 'r'))
-    mvt3,pvt3,rvt3 = readMatchingResultFromFile(open('fixed_market_varying_tier_sizes-2020-02-02_17:06:43.out', 'r'))
-    mvt4,pvt4,rvt4 = readMatchingResultFromFile(open('fixed_market_varying_tier_sizes-2020-02-03_20:16:56.out', 'r'))
+    mvt1,pvt1,rvt1 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_tier_sizes-2020-02-01_22:32:51.out', 'r'))
+    mvt2,pvt2,rvt2 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_tier_sizes-2020-02-02_16:47:20.out', 'r'))
+    mvt3,pvt3,rvt3 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_tier_sizes-2020-02-02_17:06:43.out', 'r'))
+    mvt4,pvt4,rvt4 = readMatchingResultFromFile(open('Outputs/fixed_market_varying_tier_sizes-2020-02-03_20:16:56.out', 'r'))
 
     mpvs = np.array(pvs1)
     mrvs = np.array(rvs1)
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     plt.show()
 
     ## Unbalanced market
-    mi,pi,ri = readMatchingResultFromFile(open('imbalanced_market-2020-02-05_01:56:37.out', 'r'))
+    mi,pi,ri = readMatchingResultFromFile(open('Outputs/imbalanced_market-2020-02-05_01:56:37.out', 'r'))
     pi = np.array(pi)
     ri = np.array(ri)
     series = []
@@ -324,7 +324,7 @@ if __name__ == '__main__':
     plt.legend(series, ['Tier 1 men', 'Tier 2 men', 'Women'], loc='right')
     plt.show()
 
-    mu,pu = readUniqueCountResultFromFile(open('unique_partner_count-2020-02-02_17:26:15.out','r'))
+    mu,pu = readUniqueCountResultFromFile(open('Outputs/unique_partner_count-2020-02-02_17:26:15.out','r'))
     pu = np.array(pu)
     series = []
     series.append(plt.plot(np.linspace(-10,10,21), [np.mean(pu[i][0])/3.0 for i in range(pu.shape[0])], marker='.', color=colourWheel[0])[0])
@@ -337,8 +337,8 @@ if __name__ == '__main__':
     plt.show()
 
     ## Growing market linear
-    ml1,pl1,rl1 = readMatchingResultFromFile(open('fixed_tiers_growing_market_lin-2020-02-01_17:08:07.out', 'r'))
-    ml2,pl2,rl2 = readMatchingResultFromFile(open('fixed_tiers_growing_market_lin-2020-02-01_17:38:50.out', 'r'))
+    ml1,pl1,rl1 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market_lin-2020-02-01_17:08:07.out', 'r'))
+    ml2,pl2,rl2 = readMatchingResultFromFile(open('Outputs/fixed_tiers_growing_market_lin-2020-02-01_17:38:50.out', 'r'))
     pl1 = np.array(pl1)
     rl1 = np.array(rl1)
     pl2 = np.array(pl2)
@@ -396,17 +396,17 @@ if __name__ == '__main__':
     plt.show()
 
     ## Distribution of matched pairs
-    mgn1,m11gn1 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-06_00:03:07.out', 'r'))
-    mgn2,m11gn2 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-06_23:49:26.out', 'r'))
-    mgn3,m11gn3 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-07_02:18:33.out', 'r'))
-    mgn4,m11gn4 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-07_20:22:47.out', 'r'))
-    mgn5,m11gn5 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-07_21:16:52.out', 'r'))
+    mgn1,m11gn1 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_grow_market-2020-02-06_00:03:07.out', 'r'))
+    mgn2,m11gn2 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_grow_market-2020-02-06_23:49:26.out', 'r'))
+    mgn3,m11gn3 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_grow_market-2020-02-07_02:18:33.out', 'r'))
+    mgn4,m11gn4 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_grow_market-2020-02-07_20:22:47.out', 'r'))
+    mgn5,m11gn5 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_grow_market-2020-02-07_21:16:52.out', 'r'))
 
-    mgs1,m11gs1 = readMatchingStatisticsFromFile(open('distribution_of_pairs_vary_scores-2020-02-06_01:05:15.out', 'r'))
-    mgs2,m11gs2 = readMatchingStatisticsFromFile(open('distribution_of_pairs_vary_scores-2020-02-07_00:49:34.out', 'r'))
-    mgs3,m11gs3 = readMatchingStatisticsFromFile(open('distribution_of_pairs_vary_scores-2020-02-07_03:12:42.out', 'r'))
-    mgs4,m11gs4 = readMatchingStatisticsFromFile(open('distribution_of_pairs_vary_scores-2020-02-07_21:15:34.out', 'r'))
-    mgs5,m11gs5 = readMatchingStatisticsFromFile(open('distribution_of_pairs_vary_scores-2020-02-07_22:08:09.out', 'r'))
+    mgs1,m11gs1 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_vary_scores-2020-02-06_01:05:15.out', 'r'))
+    mgs2,m11gs2 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_vary_scores-2020-02-07_00:49:34.out', 'r'))
+    mgs3,m11gs3 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_vary_scores-2020-02-07_03:12:42.out', 'r'))
+    mgs4,m11gs4 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_vary_scores-2020-02-07_21:15:34.out', 'r'))
+    mgs5,m11gs5 = readMatchingStatisticsFromFile(open('Outputs/distribution_of_pairs_vary_scores-2020-02-07_22:08:09.out', 'r'))
 
     m11gn = np.concatenate([np.array(m11gn1), np.array(m11gn2), np.array(m11gn3), np.array(m11gn4), np.array(m11gn5)], 1)
     m11gs = np.concatenate([np.array(m11gs1), np.array(m11gs2), np.array(m11gs3), np.array(m11gs4), np.array(m11gs5)], 1).reshape((8,8,-1))
@@ -428,7 +428,7 @@ if __name__ == '__main__':
     # Tiers on women
     plt.rc('figure', figsize=[11.2, 4.8])
 
-    mmpvae,pmpvae,rmpvae = readMatchingResultFromFile(open('varying_both_tier_params-2020-02-10_22:32:39.out', 'r'))
+    mmpvae,pmpvae,rmpvae = readMatchingResultFromFile(open('Outputs/varying_both_tier_params-2020-02-10_22:32:39.out', 'r'))
     p1mpvae = np.array(pmpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
     r1mpvae = np.array(rmpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
     r2mpvae = np.array(rmpvae)[:,1,:].mean(1).reshape((39,39))[:-2,:].T
@@ -487,7 +487,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Tiers on men
-    mwpvae,pwpvae,rwpvae = readMatchingResultFromFile(open('varying_both_tier_params_rev-2020-02-10_22:49:59.out', 'r'))
+    mwpvae,pwpvae,rwpvae = readMatchingResultFromFile(open('Outputs/varying_both_tier_params_rev-2020-02-10_22:49:59.out', 'r'))
     p1wpvae = np.array(pwpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
     p2wpvae = np.array(pwpvae)[:,1,:].mean(1).reshape((39,39))[:-2,:].T
     r1wpvae = np.array(rwpvae)[:,0,:].mean(1).reshape((39,39))[:-2,:].T
@@ -551,7 +551,7 @@ if __name__ == '__main__':
     ## Almost balanced market (constant difference)
     baseSizes = np.logspace(6,20,15,base=2)
 
-    mab,pab,rab = readMatchingResultFromFile(open('almost_balanced_market_avg_rank-2020-04-28_16:13:26.out', 'r'))
+    mab,pab,rab = readMatchingResultFromFile(open('Outputs/almost_balanced_market_avg_rank-2020-04-28_16:13:26.out', 'r'))
     rab = np.array(rab)
     pab = np.array(pab)
     series = []
@@ -566,7 +566,7 @@ if __name__ == '__main__':
     plt.legend(series, ['Tier 1 men', 'Tier 2 men', 'Tier 1 women', 'Tier 2 women'], loc='upper left')
     plt.show()
 
-    _,m11ab,m21ab = readMatchingStatisticsFromFile(open('almost_balanced_market_matched_count-2020-04-28_16:13:26.out','r'), nSeries=2)
+    _,m11ab,m21ab = readMatchingStatisticsFromFile(open('Outputs/almost_balanced_market_matched_count-2020-04-28_16:13:26.out','r'), nSeries=2)
     m11ab = np.array(m11ab)
     m21ab = np.array(m21ab)
     series = []

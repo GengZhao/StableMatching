@@ -28,7 +28,7 @@ int main()
 
     ofstream outFile;
 
-    outFile.open("varying_both_tier_params_rev-" + getTime() + ".out");
+    outFile.open("Outputs/varying_both_tier_params_rev-" + getTime() + ".out");
     for (int sAlpha = 0; sAlpha < nStepsScore; sAlpha++) {
         cout << "Tier size step:";
         tierSizesProp = vector<int>{25, 975};
