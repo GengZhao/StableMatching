@@ -51,9 +51,9 @@ def readUniqueCountResultFromFile(inFile):
 
     return (matchingConfigs, proposerUniquePartnerCountByTier)
 
-def readMatchingStatisticsFromFile(inFile):
+def readMatchingStatisticsFromFile(inFile, nSeries=1):
     matchingConfigs = []
-    matchingStatistics = []
+    matchingStatistics = [[] for _ in range(nSeries)]
     for l in inFile:
         nTiersProp = int(l)
         tierSizesProp = [int(next(inFile)) for tr in range(nTiersProp)]
@@ -64,9 +64,10 @@ def readMatchingStatisticsFromFile(inFile):
         matchingConfigs.append(MatchingConfig(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, scoresRec))
 
         nIters = int(next(inFile))
-        matchingStatistics.append([int(next(inFile)) for i in range(nIters)])
+        for s in range(nSeries):
+            matchingStatistics[s].append([int(next(inFile)) for i in range(nIters)])
 
-    return (matchingConfigs, matchingStatistics)
+    return [matchingConfigs] + matchingStatistics
 
 if __name__ == '__main__':
     '''
@@ -136,6 +137,7 @@ if __name__ == '__main__':
                 '#b2182b',
                 '#053061']
 
+    '''
     ## Growing market exponential
     m1,p1,r1 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:06:27.out', 'r'))
     m2,p2,r2 = readMatchingResultFromFile(open('fixed_tiers_growing_market-2020-01-30_00:26:18.out', 'r'))
@@ -224,7 +226,6 @@ if __name__ == '__main__':
     plt.xscale('log')
     plt.show()
 
-    '''
     ## Varying tier configurations
     mvs1,pvs1,rvs1 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-07_23:55:01.out', 'r'))
     mvs2,pvs2,rvs2 = readMatchingResultFromFile(open('fixed_market_varying_scores-2020-02-07_23:20:17.out', 'r'))
@@ -307,12 +308,11 @@ if __name__ == '__main__':
     plt.ylabel("Women's average rank of partners\nunder WOSM")
     plt.legend(series, ['Tier 1', 'Tier 2'], loc='right')
     plt.show()
-    '''
 
     ## Unbalanced market
     mi,pi,ri = readMatchingResultFromFile(open('imbalanced_market-2020-02-05_01:56:37.out', 'r'))
-    ri = np.array(ri)
     pi = np.array(pi)
+    ri = np.array(ri)
     series = []
     series.append(plt.plot(np.linspace(-10,10,21), [np.mean(pi[i][0]) for i in range(pi.shape[0])], marker='.', color=colourWheel[0])[0])
     series.append(plt.plot(np.linspace(-10,10,21), [np.mean(pi[i][1]) for i in range(pi.shape[0])], marker='.', color=colourWheel[1])[0])
@@ -336,7 +336,6 @@ if __name__ == '__main__':
     plt.legend(series, ['Tier 1 men', 'Tier 2 men'], loc='right')
     plt.show()
 
-    '''
     ## Growing market linear
     ml1,pl1,rl1 = readMatchingResultFromFile(open('fixed_tiers_growing_market_lin-2020-02-01_17:08:07.out', 'r'))
     ml2,pl2,rl2 = readMatchingResultFromFile(open('fixed_tiers_growing_market_lin-2020-02-01_17:38:50.out', 'r'))
@@ -395,7 +394,6 @@ if __name__ == '__main__':
     plt.ylabel("Ratio of average rank between tiers of women")
     plt.legend(series, ['Tier 1 : Tier 3', 'Tier 2 : Tier 3'], loc='lower right')
     plt.show()
-    '''
 
     ## Distribution of matched pairs
     mgn1,m11gn1 = readMatchingStatisticsFromFile(open('distribution_of_pairs_grow_market-2020-02-06_00:03:07.out', 'r'))
@@ -545,5 +543,43 @@ if __name__ == '__main__':
     plt.colorbar()
     plt.xlabel("beta_1")
     plt.ylabel("delta_1")
+    plt.show()
+
+    plt.rc('figure', figsize=plt.rcParamsDefault.get('figure.figsize'))
+    '''
+
+    ## Almost balanced market (constant difference)
+    baseSizes = np.logspace(6,20,15,base=2)
+
+    mab,pab,rab = readMatchingResultFromFile(open('almost_balanced_market_avg_rank-2020-04-28_16:13:26.out', 'r'))
+    rab = np.array(rab)
+    pab = np.array(pab)
+    series = []
+    series.append(plt.plot(baseSizes, [np.mean(pab[i][0]) for i in range(pab.shape[0])], marker='.', color=colourWheel[0])[0])
+    series.append(plt.plot(baseSizes, [np.mean(pab[i][1]) for i in range(pab.shape[0])], marker='.', color=colourWheel[1])[0])
+    series.append(plt.plot(baseSizes, [np.mean(rab[i][0]) for i in range(rab.shape[0])], marker='.', color=colourWheel[2])[0])
+    series.append(plt.plot(baseSizes, [np.mean(rab[i][1]) for i in range(rab.shape[0])], marker='.', color=colourWheel[3])[0])
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel("Number of men")
+    plt.ylabel("Average rank of partners")
+    plt.legend(series, ['Tier 1 men', 'Tier 2 men', 'Tier 1 women', 'Tier 2 women'], loc='upper left')
+    plt.show()
+
+    _,m11ab,m21ab = readMatchingStatisticsFromFile(open('almost_balanced_market_matched_count-2020-04-28_16:13:26.out','r'), nSeries=2)
+    m11ab = np.array(m11ab)
+    m21ab = np.array(m21ab)
+    series = []
+    series.append(plt.plot(baseSizes, m11ab.mean(1) * 2.0 / baseSizes, color=colourWheel[0], marker='.')[0])
+    plt.plot(baseSizes, np.percentile(m11ab,97,axis=1) * 2.0 / baseSizes, color=colourWheel[0], ls='--')
+    plt.plot(baseSizes, np.percentile(m11ab,3,axis=1) * 2.0 / baseSizes, color=colourWheel[0], ls='--')
+    series.append(plt.plot(baseSizes, m21ab.mean(1) * 2.0 / baseSizes, color=colourWheel[1], marker='.')[0])
+    plt.plot(baseSizes, np.percentile(m21ab,97,axis=1) * 2.0 / baseSizes, color=colourWheel[1], ls='--')
+    plt.plot(baseSizes, np.percentile(m21ab,3,axis=1) * 2.0 / baseSizes, color=colourWheel[1], ls='--')
+    plt.hlines(0.5, plt.xlim()[0], plt.xlim()[1], color=colourWheel[2], linestyles=':')
+    plt.xlabel("Number of men")
+    plt.ylabel("Percentage of men in each tier\nmatched to tier 1 women")
+    plt.legend(series, ['Tier 1', 'Tier 2'], loc='upper right')
+    plt.xscale('log')
     plt.show()
 

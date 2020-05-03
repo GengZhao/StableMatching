@@ -9,10 +9,10 @@ using namespace std;
 
 int main()
 {
-    vector<int> tierSizesProp{800000, 800000};
-    vector<int> tierSizesRec{100000, 500000, 1000000};
-    vector<double> scoresProp{3.0, 1.0};
-    vector<double> scoresRec{1.0, 2.0, 3.0};
+    vector<int> tierSizesProp{1000000};
+    vector<int> tierSizesRec{1000000, 100};
+    vector<double> scoresProp{1.0};
+    vector<double> scoresRec{3.0, 1.0};
 
     // printVectorTsv(tierSizesProp, cout);
     // printVectorTsv(tierSizesRec, cout);
@@ -24,7 +24,7 @@ int main()
         // M.run();
         // cout << M.totalNumProposals << endl;
     // }
-    Matching M(2, 3, tierSizesProp, tierSizesRec, scoresProp, scoresRec, false, false);
+    Matching M(1, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, false, false);
 
     // M.runExperimental();
     // M.result();
