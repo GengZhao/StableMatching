@@ -252,8 +252,12 @@ int Agent::rankOfPartnerForReceiver(mt19937& rng)
     assert(this->role == RECEIVER);
     assert(this->curPartner); // undefined if unmatched
     if (this->pregeneratePreferences) {
-        return distance(this->preferences.begin(), find_if(this->preferences.begin(), this->preferences.end(), [&](PreferenceEntry pe) { return pe.index == this->curPartner->index; })) + 1;
+        if (this->preferencesCompleted) {
+            return distance(this->preferences.begin(), find_if(this->preferences.begin(), this->preferences.end(), [&](PreferenceEntry pe) { return pe.index == this->curPartner->index; })) + 1;
+        }
+        return count_if(this->invHappinessForPartners.begin(), this->invHappinessForPartners.end(), [&](pair<int, double> p) { return p.second <= this->invHappiness; });
     }
+
     if (this->simulatedRankOfPartner > 0)
         return this->simulatedRankOfPartner;
 
