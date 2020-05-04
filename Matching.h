@@ -30,6 +30,7 @@ class Matching
         std::vector<Agent*> agentsRec;
 
         std::queue<Agent*> agentsToPropose;
+        std::queue<Agent*> suboptimalReceivers; // initialized after the first stable matching is found
 
         std::vector<std::vector<int> > proposalCountMatrix;
         std::vector<std::vector<int> > matchCountMatrix;
@@ -38,11 +39,13 @@ class Matching
         std::vector<int> numMatchesByRecTier;
 
         const bool pregeneratePreferences; // for long running proposing chain
-        const bool savePreferences; // for generating full preferences
+        const bool savePreferences; // for generating full preferences. This ensures consistency
 
         bool recordingProposalCounts;
 
         void printMatchSetupInfo();
+        void stashAll();
+        void stashPopAll();
 
     public:
         int totalNumProposals; // for convenience
@@ -60,6 +63,7 @@ class Matching
         );
         ~Matching();
         void run();
+        bool runFromCurrent();
         void reverseRun();
         void resetState(); // will preserve agents' generated preferences
         void runExperimental();

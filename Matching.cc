@@ -95,6 +95,54 @@ void Matching::run()
             }
         }
     }
+
+    for (Agent* r : this->agentsRec) {
+        if (!r->matchedPartner()) {
+            r->markOptimal(); // these will never be matched (ref. rural hospital)
+        } else {
+            this->suboptimalReceivers.push(r);
+        }
+    }
+}
+
+// can only run from already stable state
+bool Matching::runFromCurrent()
+{
+    assert(this->pregeneratePreferences && this->savePreferences);
+    this->recordingProposalCounts = false;
+    assert(this->agentsToPropose.empty());
+
+    // while some receiver is not optimal
+    while (!(this->suboptimalReceivers.empty())) {
+        Agent* suboptimalReceiver = this->suboptimalReceivers.front();
+        Agent* rejected = suboptimalReceiver->rejectMatched();
+        assert(rejected);
+        this->agentsToPropose.push(rejected);
+
+        this->stashAll(); // save previous matching
+        while (!(this->agentsToPropose.empty())) {
+            Agent* proposer = this->agentsToPropose.front();
+            this->agentsToPropose.pop();
+            Agent* receiver = proposer->propose(this->agentsRec, this->rng);
+            if (receiver && !receiver->isOptimal()) {
+                Agent* rejected = receiver->handleProposal(proposer, this->rng);
+                if (rejected) { // including when proposer is worse than the previous match for the initial suboptimalReceiver
+                    this->agentsToPropose.push(rejected);
+                } else {
+                    // the initial suboptimalReceiver finds a better match, i.e. rejection chain complete
+                    // => a new stable matching
+                    return true;
+                }
+            } else {
+                // proposed to someone already at optimum
+                // => cannot find a new stable matching
+                this->stashPopAll(); // restore previous matching
+                suboptimalReceiver->markOptimal();
+                this->suboptimalReceivers.pop();
+            }
+        }
+    }
+    return false;
 }
 
 // can only reverse run after a normal run
@@ -195,6 +243,18 @@ void Matching::runExperimental()
             }
         }
     }
+}
+
+void Matching::stashAll()
+{
+    for (Agent* p : this->agentsProp) p->stash();
+    for (Agent* r : this->agentsRec) r->stash();
+}
+
+void Matching::stashPopAll()
+{
+    for (Agent* p : this->agentsProp) p->stashPop();
+    for (Agent* r : this->agentsRec) r->stashPop();
 }
 
 void Matching::resetState()

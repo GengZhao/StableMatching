@@ -24,7 +24,7 @@ int main()
         // M.run();
         // cout << M.totalNumProposals << endl;
     // }
-    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true);
+    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true, true);
 
     // M.runExperimental();
     // M.result();
@@ -32,12 +32,18 @@ int main()
     // M.resetState();
     M.run();
     M.result();
+    cout << "Next" << endl;
+    M.runFromCurrent();
+    cout << "Res" << endl;
+    M.result();
+    M.runFromCurrent();
+    M.result();
     // M.printNProposalsRec();
     // M.printRanksRec();
 
-    // M.resetState();
-    // M.reverseRun();
-    // M.result();
+    M.resetState();
+    M.reverseRun();
+    M.result();
 
     // vector<vector<int> > uniqueMatches = M.reverseRunCountUniquePartners();
     // cout << endl << "Unique matching pairs (core):" << endl;

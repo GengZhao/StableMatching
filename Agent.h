@@ -39,18 +39,17 @@ class Agent
         double sumScoresForPool; // only maintained and used for proposers
         int poolSize; // only maintained and used for proposers
         Agent* curPartner;
-        Agent* prevRunPartner;
+        std::vector<Agent*> stashedPartners;
         std::vector<Agent*> proposalsMade; // only and used for proposers
         std::vector<int> poolSizesByTier; // for both sides
         double invHappiness; // only relevant for receivers
+        bool optimal; // currently only used for receivers, but can potentially be implemented also for proposers
 
         int simulatedRankOfPartner; // only for receivers (simulation cache)
         std::vector<PreferenceEntry> preferences; // only for proposers for performance reason when long side proposes
         bool preferencesCompleted; // avoid re-completion of preferences data structures
         std::map<int, double> invHappinessForPartners; // only for receivers to handle comparison
 
-        void completePreferences();
-        void reject(Agent*);
         void matchWith(Agent*);
 
     public:
@@ -72,7 +71,14 @@ class Agent
         ~Agent() {};
         Agent* propose(std::vector<Agent*>& fullPool, std::mt19937& rng);
         Agent* handleProposal(Agent*, std::mt19937& rng); // returns the rejected agent
+        void reject(Agent*);
+        Agent* rejectMatched();
+        bool isOptimal();
+        void markOptimal();
+        void stash();
+        void stashPop();
         void reverseRole(const bool preservePartner=false);
+        void completePreferences();
         void reset();
 
         Agent* matchedPartner();
