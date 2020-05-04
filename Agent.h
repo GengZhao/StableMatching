@@ -70,7 +70,7 @@ class Agent
         );
         ~Agent() {};
         Agent* propose(std::vector<Agent*>& fullPool, std::mt19937& rng);
-        Agent* handleProposal(Agent*, std::mt19937& rng); // returns the rejected agent
+        Agent* handleProposal(Agent*, std::mt19937& rng, const bool dryrun=false); // returns the rejected agent
         void reject(Agent*);
         Agent* rejectMatched();
         bool isOptimal();

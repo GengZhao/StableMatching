@@ -197,12 +197,12 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
     return agentToProposeTo;
 }
 
-Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)
+Agent* Agent::handleProposal(Agent* proposer, mt19937& rng, const bool dryrun)
 {
-    this->poolSizesByTier[proposer->tier]--;
+    if (!dryrun) this->poolSizesByTier[proposer->tier]--;
 
     double invHappinessNew;
-    if (this->pregeneratePreferences || this->roleReversed) {
+    if (this->invHappinessForPartners.count(proposer->index)) {
         invHappinessNew = this->invHappinessForPartners[proposer->index];
     } else {
         exponential_distribution<double> distribution(proposer->score);
@@ -211,13 +211,15 @@ Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)
     }
 
     if (invHappinessNew < this->invHappiness) {
-        this->invHappiness = invHappinessNew;
+        if (dryrun) return this->curPartner;
         Agent* toReject = this->rejectMatched();
+        this->invHappiness = invHappinessNew;
         if (this->verbose) cout << "Acceptance: (R)" << this->index << " - (P)" << proposer->index << endl;
         this->matchWith(proposer);
         proposer->matchWith(this);
         return toReject;
     }
+    if (dryrun) return proposer;
     this->reject(proposer);
     return proposer;
 }

@@ -11,8 +11,8 @@ int main()
 {
     vector<int> tierSizesProp{100, 100};
     vector<int> tierSizesRec{100, 100};
-    vector<double> scoresProp{2.0, 1.0};
-    vector<double> scoresRec{3.0, 1.0};
+    vector<double> scoresProp{3.0, 1.0};
+    vector<double> scoresRec{2.0, 1.0};
 
     // printVectorTsv(tierSizesProp, cout);
     // printVectorTsv(tierSizesRec, cout);
@@ -24,7 +24,7 @@ int main()
         // M.run();
         // cout << M.totalNumProposals << endl;
     // }
-    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true, true);
+    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true);
 
     // M.runExperimental();
     // M.result();
@@ -32,18 +32,15 @@ int main()
     // M.resetState();
     M.run();
     M.result();
-    cout << "Next" << endl;
-    M.runFromCurrent();
-    cout << "Res" << endl;
-    M.result();
-    M.runFromCurrent();
+    int nMatchings = 1;
+    while (M.runFromCurrent()) nMatchings++;
     M.result();
     // M.printNProposalsRec();
     // M.printRanksRec();
 
-    M.resetState();
-    M.reverseRun();
-    M.result();
+    // M.resetState();
+    // M.reverseRun();
+    // M.result();
 
     // vector<vector<int> > uniqueMatches = M.reverseRunCountUniquePartners();
     // cout << endl << "Unique matching pairs (core):" << endl;

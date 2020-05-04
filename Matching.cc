@@ -110,16 +110,56 @@ bool Matching::runFromCurrent()
 {
     assert(this->pregeneratePreferences && this->savePreferences);
     this->recordingProposalCounts = false;
-    assert(this->agentsToPropose.empty());
 
+    RejectionChain rejectionChain; // TODO: preserve and reuse this
     // while some receiver is not optimal
     while (!(this->suboptimalReceivers.empty())) {
+        this->stashAll(); // save previous matching
+
         Agent* suboptimalReceiver = this->suboptimalReceivers.front();
+
         Agent* rejected = suboptimalReceiver->rejectMatched();
         assert(rejected);
+        rejectionChain.add(suboptimalReceiver, rejected);
+        while (!(rejectionChain.empty())) {
+            Agent* proposer = rejectionChain.nextProposer();
+            while (true) {
+                Agent* receiver = proposer->propose(this->agentsRec, this->rng);
+                if (receiver && !receiver->isOptimal()) {
+                    Agent* rejected = receiver->handleProposal(proposer, this->rng, true);
+                    if (rejected == proposer) { // failed proposal
+                        receiver->reject(proposer);
+                        continue;
+                    }
+                    if (rejectionChain.contains(receiver)) {
+                        // found a cycle
+                        int position = rejectionChain.positionOf(receiver);
+                        for (int pos = 0; pos < position; pos++) {
+                            RejectionChainEntry entry = rejectionChain.at(pos);
+                            entry.fromRejecter->stashPop();
+                            entry.toRejectee->stashPop();
+                        }
+                        receiver->stashPop();
+                        receiver->handleProposal(proposer, this->rng); // actually run the proposal
+                        return true;
+                    }
+                    receiver->rejectMatched();
+                    rejectionChain.add(receiver, rejected);
+                    break;
+                } else {
+                    // proposed to someone already at optimum
+                    // => cannot find a new stable matching
+                    this->stashPopAll(); // restore previous matching
+                    suboptimalReceiver->markOptimal();
+                    this->suboptimalReceivers.pop();
+                    break;
+                }
+            }
+        }
+
+        /*
         this->agentsToPropose.push(rejected);
 
-        this->stashAll(); // save previous matching
         while (!(this->agentsToPropose.empty())) {
             Agent* proposer = this->agentsToPropose.front();
             this->agentsToPropose.pop();
@@ -141,6 +181,7 @@ bool Matching::runFromCurrent()
                 this->suboptimalReceivers.pop();
             }
         }
+        */
     }
     return false;
 }
@@ -423,3 +464,4 @@ void Matching::result()
     cout << endl << "Avg rank of match by receiver tier:" << endl;
     printVectorTsv(this->avgRankForReceiverByTier());
 }
+
