@@ -50,8 +50,6 @@ class Agent
         bool preferencesCompleted; // avoid re-completion of preferences data structures
         std::map<int, double> invHappinessForPartners; // only for receivers to handle comparison
 
-        void matchWith(Agent*);
-
     public:
         const int index;
         const double score;
@@ -73,6 +71,8 @@ class Agent
         Agent* handleProposal(Agent*, std::mt19937& rng, const bool dryrun=false); // returns the rejected agent
         void reject(Agent*);
         Agent* rejectMatched();
+        void matchWith(Agent*);
+
         bool isOptimal();
         void markOptimal();
         void stash();

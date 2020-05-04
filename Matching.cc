@@ -112,7 +112,6 @@ bool Matching::runFromCurrent()
     this->recordingProposalCounts = false;
 
     RejectionChain rejectionChain; // TODO: preserve and reuse this
-    // while some receiver is not optimal
     while (!(this->suboptimalReceivers.empty())) {
         this->stashAll(); // save previous matching
 
@@ -140,10 +139,12 @@ bool Matching::runFromCurrent()
                             entry.toRejectee->stashPop();
                         }
                         receiver->stashPop();
-                        receiver->handleProposal(proposer, this->rng); // actually run the proposal
+                        Agent* nextNextInChain = receiver->matchedPartner()->matchedPartner();
+                        Agent* nextInChain = receiver->handleProposal(proposer, this->rng); // actually run the proposal
+                        nextInChain->matchWith(nextNextInChain); // hack since we mis-rejected this agent in handling the proposal above
                         return true;
                     }
-                    receiver->rejectMatched();
+                    receiver->handleProposal(proposer, this->rng); // actually run the proposal
                     rejectionChain.add(receiver, rejected);
                     break;
                 } else {
