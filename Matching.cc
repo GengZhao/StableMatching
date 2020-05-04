@@ -100,7 +100,7 @@ void Matching::run()
         if (!r->matchedPartner()) {
             r->markOptimal(); // these will never be matched (ref. rural hospital)
         } else {
-            this->suboptimalReceivers.push(r);
+            this->suboptimalReceivers.insert(r);
         }
     }
 }
@@ -115,7 +115,7 @@ bool Matching::runFromCurrent()
     while (!(this->suboptimalReceivers.empty())) {
         this->stashAll(); // save previous matching
 
-        Agent* suboptimalReceiver = this->suboptimalReceivers.front();
+        Agent* suboptimalReceiver = *(this->suboptimalReceivers.begin());
 
         Agent* rejected = suboptimalReceiver->rejectMatched();
         assert(rejected);
@@ -124,7 +124,7 @@ bool Matching::runFromCurrent()
             Agent* proposer = rejectionChain.nextProposer();
             while (true) {
                 Agent* receiver = proposer->propose(this->agentsRec, this->rng);
-                if (receiver && !receiver->isOptimal()) {
+                if (receiver) { // && !receiver->isOptimal()) {
                     Agent* rejected = receiver->handleProposal(proposer, this->rng, true);
                     if (rejected == proposer) { // failed proposal
                         receiver->reject(proposer);
@@ -152,7 +152,12 @@ bool Matching::runFromCurrent()
                     // => cannot find a new stable matching
                     this->stashPopAll(); // restore previous matching
                     suboptimalReceiver->markOptimal();
-                    this->suboptimalReceivers.pop();
+                    this->suboptimalReceivers.erase(suboptimalReceiver);
+                    // for (vector<RejectionChainEntry>::iterator it = rejectionChain.begin(); it != rejectionChain.end(); ++it) {
+                        // it->fromRejecter->markOptimal();
+                        // this->suboptimalReceivers.erase(it->fromRejecter);
+                    // }
+                    rejectionChain.clear();
                     break;
                 }
             }

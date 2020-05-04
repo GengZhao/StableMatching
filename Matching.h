@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <set>
 #include <cassert>
 #include <random>
 
@@ -34,7 +35,10 @@ class RejectionChain
         bool contains(Agent* receiver) { return rejecterPositions.count(receiver) > 0; }
         int positionOf(Agent* receiver) { return rejecterPositions.at(receiver); }
         RejectionChainEntry at(int position) { return entries.at(position); }
+        std::vector<RejectionChainEntry>::iterator begin() { return entries.begin(); }
+        std::vector<RejectionChainEntry>::iterator end() { return entries.end(); }
         Agent* nextProposer() { return entries.back().toRejectee; }
+        void clear() { entries.clear(); rejecterPositions.clear(); }
 };
 
 class Matching
@@ -57,7 +61,7 @@ class Matching
         std::vector<Agent*> agentsRec;
 
         std::queue<Agent*> agentsToPropose;
-        std::queue<Agent*> suboptimalReceivers; // initialized after the first stable matching is found
+        std::set<Agent*> suboptimalReceivers; // initialized after the first stable matching is found
         // RejectionChain rejectionChain;
 
         std::vector<std::vector<int> > proposalCountMatrix;

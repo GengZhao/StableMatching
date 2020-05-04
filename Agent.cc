@@ -116,6 +116,7 @@ void Agent::markOptimal() { this->optimal = true; }
 void Agent::stash()
 {
     this->stashedPartners.push_back(this->curPartner);
+    this->stashedProposalsMade = this->proposalsMade;
 }
 
 void Agent::stashPop()
@@ -123,6 +124,7 @@ void Agent::stashPop()
     this->curPartner = this->stashedPartners.back();
     this->invHappiness = this->invHappinessForPartners[this->curPartner->index];
     this->stashedPartners.pop_back();
+    this->proposalsMade = this->stashedProposalsMade;
 }
 
 // should be called after a normal run

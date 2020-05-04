@@ -41,6 +41,7 @@ class Agent
         Agent* curPartner;
         std::vector<Agent*> stashedPartners;
         std::vector<Agent*> proposalsMade; // only and used for proposers
+        std::vector<Agent*> stashedProposalsMade;
         std::vector<int> poolSizesByTier; // for both sides
         double invHappiness; // only relevant for receivers
         bool optimal; // currently only used for receivers, but can potentially be implemented also for proposers

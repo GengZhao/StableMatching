@@ -9,8 +9,8 @@ using namespace std;
 
 int main()
 {
-    vector<int> tierSizesProp{100, 100};
-    vector<int> tierSizesRec{100, 100};
+    vector<int> tierSizesProp{50, 50};
+    vector<int> tierSizesRec{50, 50};
     vector<double> scoresProp{3.0, 1.0};
     vector<double> scoresRec{2.0, 1.0};
 
@@ -24,7 +24,7 @@ int main()
         // M.run();
         // cout << M.totalNumProposals << endl;
     // }
-    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true);
+    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true, true);
 
     // M.runExperimental();
     // M.result();
@@ -33,14 +33,17 @@ int main()
     M.run();
     M.result();
     int nMatchings = 1;
-    while (M.runFromCurrent()) nMatchings++;
-    M.result();
+    while (M.runFromCurrent()) {
+        nMatchings++;
+        cout << nMatchings << endl;
+        M.result();
+    }
     // M.printNProposalsRec();
     // M.printRanksRec();
 
-    // M.resetState();
-    // M.reverseRun();
-    // M.result();
+    M.resetState();
+    M.reverseRun();
+    M.result();
 
     // vector<vector<int> > uniqueMatches = M.reverseRunCountUniquePartners();
     // cout << endl << "Unique matching pairs (core):" << endl;
