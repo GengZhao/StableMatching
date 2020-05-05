@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include "Matching.h"
+#include "Agent.h"
 #include "utils.h"
 
 using namespace std;
@@ -385,11 +386,24 @@ void Matching::printNProposalsRec(ostream& os)
     }
 }
 
-void Matching::printRanksRec(ostream& os)
+void Matching::printRanks(const Role role, ostream& os)
 {
-    for (Agent* r : this->agentsRec) {
-        if (r->matchedPartner()) {
-            os << r->rankOfPartnerForReceiver(this->rng) << endl;
+    vector<Agent*>& agents = (role == PROPOSER ? this->agentsProp : this->agentsRec);
+    for (Agent* agt : agents) {
+        if (agt->matchedPartner()) {
+            os << agt->rankOfPartnerForAgent(this->rng) << endl;
+        } else {
+            os << -1 << endl;
+        }
+    }
+}
+
+void Matching::printInvHappinesses(const Role role, ostream& os)
+{
+    vector<Agent*>& agents = (role == PROPOSER ? this->agentsProp : this->agentsRec);
+    for (Agent* agt : agents) {
+        if (agt->matchedPartner()) {
+            os << agt->invHappinessOfAgent() << endl;
         } else {
             os << -1 << endl;
         }

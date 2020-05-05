@@ -110,7 +110,7 @@ void Agent::completePreferences()
     this->preferencesCompleted = true;
 }
 
-bool Agent::isOptimal() { return this->optimal; }
+bool Agent::isOptimal() const { return this->optimal; }
 void Agent::markOptimal() { this->optimal = true; }
 
 void Agent::stash()
@@ -256,22 +256,32 @@ void Agent::matchWith(Agent* agent)
 
 /** Result computation **/
 
-Agent* Agent::matchedPartner()
+Agent* Agent::matchedPartner() const
 {
     return this->curPartner;
 }
 
-int Agent::numProposalsReceived()
+int Agent::numProposalsReceived() const
 {
     return this->partnerSideNAgents - accumulate(this->poolSizesByTier.begin(), this->poolSizesByTier.end(), 0);
 }
 
 // not counting the unmatched case
-bool Agent::hasUniqueMatch()
+bool Agent::hasUniqueMatch() const
 {
     assert(this->roleReversed);
     return this->curPartner && !this->stashedPartners.empty() && this->stashedPartners.front() == this->curPartner;
 }
+
+int Agent::rankOfPartnerForAgent(mt19937& rng)
+{
+    switch (this->role)
+    {
+        case PROPOSER: return this->rankOfPartnerForProposer();
+        case RECEIVER: return this->rankOfPartnerForReceiver(rng);
+    }
+}
+
 
 int Agent::rankOfPartnerForProposer()
 {
@@ -308,12 +318,25 @@ int Agent::rankOfPartnerForReceiver(mt19937& rng)
     return rank;
 }
 
-void Agent::printPreferences(ostream& os)
+double Agent::invHappinessOfAgent() const
+{
+    if (!this->curPartner) return numeric_limits<double>::max();
+    switch (this->role)
+    {
+        case PROPOSER:
+            assert(this->pregeneratePreferences);
+            return find_if(this->preferences.begin(), this->preferences.end(), [&](PreferenceEntry pe) { return pe.index == this->curPartner->index; })->invHappiness;
+        case RECEIVER:
+            return this->invHappiness;
+    }
+}
+
+void Agent::printPreferences(ostream& os) const
 {
     assert(this->preferencesCompleted);
     os << "(" << (this->role == PROPOSER ? "P" : "R") << ")" << this->index;
     for (const PreferenceEntry& pe : this->preferences) {
-        os << "," << pe.index << "-" << this->invHappinessForPartners[pe.index];
+        os << "," << pe.index << "-" << this->invHappinessForPartners.at(pe.index);
     }
     os << endl;
 }

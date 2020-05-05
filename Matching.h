@@ -105,7 +105,8 @@ class Matching
         std::vector<std::vector<int> > reverseRunCountUniquePartners();
         std::vector<std::vector<int> > getMatchCountMatrix();
         void result();
-        void printRanksRec(std::ostream& os=std::cout);
+        void printRanks(const Role role, std::ostream& os=std::cout);
+        void printInvHappinesses(const Role role, std::ostream& os=std::cout);
         void printNProposalsRec(std::ostream& os=std::cout);
         void printAgentsPreferences(std::ostream& os=std::cout);
         void sanityCheckStableMatching();

@@ -76,7 +76,7 @@ class Agent
         Agent* rejectMatched();
         void matchWith(Agent*);
 
-        bool isOptimal();
+        bool isOptimal() const;
         void markOptimal();
         void stash();
         void stashPop();
@@ -84,13 +84,15 @@ class Agent
         void completePreferences();
         void reset();
 
-        Agent* matchedPartner();
-        bool hasUniqueMatch();
+        Agent* matchedPartner() const;
+        bool hasUniqueMatch() const;
 
+        int rankOfPartnerForAgent(std::mt19937& rng);
         int rankOfPartnerForProposer(); // only for proposers
-        int rankOfPartnerForReceiver(std::mt19937& rng); // only for receivers, supplying the proposers vector just for convenience
-        int numProposalsReceived(); // only for receivers
-        void printPreferences(std::ostream& os=std::cout);
+        int rankOfPartnerForReceiver(std::mt19937& rng); // only for receivers
+        double invHappinessOfAgent() const;
+        int numProposalsReceived() const; // only for receivers
+        void printPreferences(std::ostream& os=std::cout) const;
 };
 
 #endif
