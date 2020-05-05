@@ -5,10 +5,41 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <map>
+#include <set>
 #include <cassert>
 #include <random>
 
 #include "Agent.h"
+
+struct RejectionChainEntry
+{
+    Agent* fromRejecter;
+    Agent* toRejectee;
+};
+
+class RejectionChain
+{
+    private:
+        std::vector<RejectionChainEntry> entries;
+        std::map<Agent*, int> rejecterPositions;
+
+    public:
+        void add(Agent* fromRejecter, Agent* toRejectee) {
+            rejecterPositions[fromRejecter] = entries.size();
+            RejectionChainEntry rce { fromRejecter, toRejectee };
+            entries.push_back(rce);
+        }
+
+        bool empty() { return entries.empty(); }
+        bool contains(Agent* receiver) { return rejecterPositions.count(receiver) > 0; }
+        int positionOf(Agent* receiver) { return rejecterPositions.at(receiver); }
+        RejectionChainEntry at(int position) { return entries.at(position); }
+        std::vector<RejectionChainEntry>::iterator begin() { return entries.begin(); }
+        std::vector<RejectionChainEntry>::iterator end() { return entries.end(); }
+        Agent* nextProposer() { return entries.back().toRejectee; }
+        void clear() { entries.clear(); rejecterPositions.clear(); }
+};
 
 class Matching
 {
@@ -30,6 +61,7 @@ class Matching
         std::vector<Agent*> agentsRec;
 
         std::queue<Agent*> agentsToPropose;
+        std::set<Agent*> suboptimalReceivers; // initialized after the first stable matching is found
 
         std::vector<std::vector<int> > proposalCountMatrix;
         std::vector<std::vector<int> > matchCountMatrix;
@@ -37,12 +69,15 @@ class Matching
         std::vector<int> numMatchesByPropTier;
         std::vector<int> numMatchesByRecTier;
 
+        bool preferencesCompleted;
         const bool pregeneratePreferences; // for long running proposing chain
-        const bool savePreferences; // for generating full preferences
+        const bool savePreferences; // for generating full preferences. This ensures consistency
 
         bool recordingProposalCounts;
 
         void printMatchSetupInfo();
+        void stashAll();
+        void stashPopAll();
 
     public:
         int totalNumProposals; // for convenience
@@ -60,8 +95,10 @@ class Matching
         );
         ~Matching();
         void run();
+        bool runFromCurrent();
         void reverseRun();
         void resetState(); // will preserve agents' generated preferences
+        void completePreferences();
         void runExperimental();
         std::vector<double> avgRankForProposerByTier(); // only counting matched proposers
         std::vector<double> avgRankForReceiverByTier(); // only counting matched receivers (simulated)
@@ -70,6 +107,9 @@ class Matching
         void result();
         void printRanksRec(std::ostream& os=std::cout);
         void printNProposalsRec(std::ostream& os=std::cout);
+        void printAgentsPreferences(std::ostream& os=std::cout);
+        void sanityCheckStableMatching();
 };
 
 #endif
+

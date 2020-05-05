@@ -30,6 +30,7 @@ Matching::Matching(
     numProposalsMadeByPropTier(nTiersProp, 0),
     numMatchesByPropTier(nTiersProp, 0),
     numMatchesByRecTier(nTiersRec, 0),
+    preferencesCompleted(false),
     pregeneratePreferences(pregeneratePreferences),
     savePreferences(savePreferences),
     recordingProposalCounts(true),
@@ -95,6 +96,73 @@ void Matching::run()
             }
         }
     }
+
+    for (Agent* r : this->agentsRec) {
+        if (!r->matchedPartner()) {
+            r->markOptimal(); // these will never be matched (ref. rural hospital)
+        } else {
+            this->suboptimalReceivers.insert(r);
+        }
+    }
+}
+
+// can only run from already stable state
+bool Matching::runFromCurrent()
+{
+    assert(this->pregeneratePreferences && this->savePreferences);
+    this->recordingProposalCounts = false;
+    this->completePreferences();
+
+    RejectionChain rejectionChain; // TODO: preserve and reuse this
+    while (!(this->suboptimalReceivers.empty())) {
+        this->stashAll(); // save previous matching
+
+        Agent* suboptimalReceiver = *(this->suboptimalReceivers.begin());
+
+        Agent* rejected = suboptimalReceiver->rejectMatched();
+        assert(rejected);
+        rejectionChain.add(suboptimalReceiver, rejected);
+        while (!(rejectionChain.empty())) {
+            Agent* proposer = rejectionChain.nextProposer();
+            while (true) {
+                Agent* receiver = proposer->propose(this->agentsRec, this->rng);
+                if (receiver && !receiver->isOptimal()) {
+                    if (!receiver->prefer(proposer, this->rng, true)) { // failed proposal
+                        receiver->handleProposal(proposer, this->rng);
+                        continue;
+                    }
+                    if (rejectionChain.contains(receiver)) {
+                        // found a cycle
+                        int position = rejectionChain.positionOf(receiver);
+                        for (int pos = 0; pos < position; pos++) {
+                            RejectionChainEntry entry = rejectionChain.at(pos);
+                            entry.fromRejecter->stashPop();
+                            entry.toRejectee->stashPop();
+                        }
+                        receiver->stashPop();
+                        Agent* nextNextInChain = receiver->matchedPartner()->matchedPartner();
+                        Agent* nextInChain = receiver->handleProposal(proposer, this->rng); // actually run the proposal
+                        nextInChain->matchWith(nextNextInChain); // hack since we mis-rejected this agent in handling the proposal above
+                        return true;
+                    }
+                    Agent* rejected = receiver->handleProposal(proposer, this->rng); // actually run the proposal
+                    rejectionChain.add(receiver, rejected);
+                    break;
+                } else {
+                    // proposed to someone already at optimum
+                    // => cannot find a new stable matching
+                    this->stashPopAll(); // restore previous matching
+                    for (vector<RejectionChainEntry>::iterator it = rejectionChain.begin(); it != rejectionChain.end(); ++it) {
+                        it->fromRejecter->markOptimal();
+                        this->suboptimalReceivers.erase(it->fromRejecter);
+                    }
+                    rejectionChain.clear();
+                    break;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 // can only reverse run after a normal run
@@ -195,6 +263,27 @@ void Matching::runExperimental()
             }
         }
     }
+}
+
+void Matching::stashAll()
+{
+    for (Agent* p : this->agentsProp) p->stash();
+    for (Agent* r : this->agentsRec) r->stash();
+}
+
+void Matching::stashPopAll()
+{
+    for (Agent* p : this->agentsProp) p->stashPop();
+    for (Agent* r : this->agentsRec) r->stashPop();
+}
+
+void Matching::completePreferences()
+{
+    if (this->preferencesCompleted) return;
+    assert(this->agentsToPropose.empty());
+    assert(this->savePreferences);
+    for (Agent* p : this->agentsProp) p->completePreferences();
+    for (Agent* r : this->agentsRec) r->completePreferences();
 }
 
 void Matching::resetState()
@@ -363,3 +452,23 @@ void Matching::result()
     cout << endl << "Avg rank of match by receiver tier:" << endl;
     printVectorTsv(this->avgRankForReceiverByTier());
 }
+
+void Matching::printAgentsPreferences(ostream& os)
+{
+    for (Agent* p : this->agentsProp) p->printPreferences(os);
+    for (Agent* r : this->agentsRec) r->printPreferences(os);
+}
+
+void Matching::sanityCheckStableMatching()
+{
+    for (Agent* p : this->agentsProp) {
+        for (Agent* r : this->agentsRec) {
+            if (p->matchedPartner() == r) {
+                if (r->matchedPartner() != p) cerr << "[ERROR] Mismatch (P-R): " << p->index << "-" << r->index << endl;
+            } else {
+                if (p->prefer(r, this->rng) && r->prefer(p, this->rng)) cerr << "[ERROR] Blocking pair (P-R): " << p->index << "-" << r->index << endl;
+            }
+        }
+    }
+}
+

@@ -35,9 +35,10 @@ Agent::Agent(
     sumScoresForPool(inner_product(partnerSideTierSizes.begin(), partnerSideTierSizes.end(),
                 partnerSideScores.begin(), 0.0)),
     poolSize(partnerSideNAgents),
-    curPartner(NULL), prevRunPartner(NULL),
+    curPartner(NULL),
     poolSizesByTier(partnerSideTierSizes),
     invHappiness(numeric_limits<double>::max()),
+    optimal(false),
     simulatedRankOfPartner(0),
     preferencesCompleted(false),
     index(index), score(score), tier(tier)
@@ -109,6 +110,24 @@ void Agent::completePreferences()
     this->preferencesCompleted = true;
 }
 
+bool Agent::isOptimal() { return this->optimal; }
+void Agent::markOptimal() { this->optimal = true; }
+
+void Agent::stash()
+{
+    this->stashedPartners.push_back(this->curPartner);
+    this->stashedProposalsMade = this->proposalsMade;
+}
+
+void Agent::stashPop()
+{
+    this->curPartner = this->stashedPartners.back();
+    this->invHappiness = this->invHappinessForPartners[this->curPartner->index];
+    this->stashedPartners.pop_back();
+    this->poolSize += this->proposalsMade.size() - this->stashedProposalsMade.size(); // TODO: ignore poolSize with pregenerated preferences
+    this->proposalsMade = this->stashedProposalsMade;
+}
+
 // should be called after a normal run
 void Agent::reverseRole(const bool preservePartner)
 {
@@ -116,7 +135,7 @@ void Agent::reverseRole(const bool preservePartner)
 
     this->roleReversed = true;
     if (!preservePartner) {
-        this->prevRunPartner = this->curPartner;
+        this->stash(); // save previous partner
         this->curPartner = NULL;
     } else if (this->curPartner) {
         this->invHappiness = this->invHappinessForPartners[this->curPartner->index];
@@ -127,7 +146,7 @@ void Agent::reverseRole(const bool preservePartner)
 void Agent::reset()
 {
     this->roleReversed = false;
-    this->prevRunPartner = this->curPartner;
+    this->stash(); // save previous partner
     this->curPartner = NULL;
     this->proposalsMade.clear();
     this->poolSizesByTier = this->partnerSideTierSizes;
@@ -181,23 +200,33 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
     return agentToProposeTo;
 }
 
+double Agent::invHappinessFor(Agent* potentialMatch, mt19937& rng)
+{
+    // TODO: when not saving preferences?
+    if (this->invHappinessForPartners.count(potentialMatch->index) > 0) return this->invHappinessForPartners[potentialMatch->index];
+    exponential_distribution<double> distribution(potentialMatch->score);
+    double invHappinessNew = distribution(rng);
+    if (this->savePreferences) this->invHappinessForPartners[potentialMatch->index] = invHappinessNew;
+    return invHappinessNew;
+}
+
+bool Agent::prefer(Agent* potentialMatch, mt19937& rng, const bool useStash)
+{
+    assert(this->pregeneratePreferences && this->savePreferences); // TODO: this should not be necessary
+    double invHappinessNew = invHappinessFor(potentialMatch, rng);
+    if (this->verbose && useStash)
+        cout << "[Test preference] stashed happiness: " << this->invHappinessForPartners[this->stashedPartners.back()->index] << " - Tested happiness: " << invHappinessNew << endl;
+    return invHappinessNew < (useStash ? this->invHappinessForPartners[this->stashedPartners.back()->index] : this->invHappinessForPartners[this->curPartner->index]);
+}
+
 Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)
 {
     this->poolSizesByTier[proposer->tier]--;
 
-    double invHappinessNew;
-    if (this->pregeneratePreferences || this->roleReversed) {
-        invHappinessNew = this->invHappinessForPartners[proposer->index];
-    } else {
-        exponential_distribution<double> distribution(proposer->score);
-        invHappinessNew = distribution(rng);
-        if (this->savePreferences) this->invHappinessForPartners[proposer->index] = invHappinessNew;
-    }
-
+    double invHappinessNew = invHappinessFor(proposer, rng);
     if (invHappinessNew < this->invHappiness) {
+        Agent* toReject = this->rejectMatched();
         this->invHappiness = invHappinessNew;
-        Agent* toReject = this->curPartner;
-        if (this->curPartner) this->reject(toReject);
         if (this->verbose) cout << "Acceptance: (R)" << this->index << " - (P)" << proposer->index << endl;
         this->matchWith(proposer);
         proposer->matchWith(this);
@@ -211,6 +240,13 @@ void Agent::reject(Agent* agent)
 {
     if (this->verbose) cout << "Rejection: (R)" << this->index << " - (P)" << agent->index << endl;
     agent->matchWith(NULL); // for initiating rejection
+}
+
+Agent* Agent::rejectMatched()
+{
+    Agent* toReject = this->curPartner;
+    if (toReject) this->reject(toReject);
+    return toReject;
 }
 
 void Agent::matchWith(Agent* agent)
@@ -234,7 +270,7 @@ int Agent::numProposalsReceived()
 bool Agent::hasUniqueMatch()
 {
     assert(this->roleReversed);
-    return this->curPartner && this->prevRunPartner == this->curPartner;
+    return this->curPartner && !this->stashedPartners.empty() && this->stashedPartners.front() == this->curPartner;
 }
 
 int Agent::rankOfPartnerForProposer()
@@ -271,3 +307,14 @@ int Agent::rankOfPartnerForReceiver(mt19937& rng)
     this->simulatedRankOfPartner = rank;
     return rank;
 }
+
+void Agent::printPreferences(ostream& os)
+{
+    assert(this->preferencesCompleted);
+    os << "(" << (this->role == PROPOSER ? "P" : "R") << ")" << this->index;
+    for (const PreferenceEntry& pe : this->preferences) {
+        os << "," << pe.index << "-" << this->invHappinessForPartners[pe.index];
+    }
+    os << endl;
+}
+

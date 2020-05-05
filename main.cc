@@ -32,12 +32,26 @@ int main()
     // M.resetState();
     M.run();
     M.result();
+
+    // M.sanityCheckStableMatching(); // current only usable when preferences are complete
+
+    // M.completePreferences(); // only when saving preferences
+    // M.printAgentsPreferences();
+
+    int nMatchings = 1;
+    while (M.runFromCurrent()) {
+        nMatchings++;
+        M.sanityCheckStableMatching();
+        M.result();
+    }
+    cout << nMatchings << endl;
     // M.printNProposalsRec();
     // M.printRanksRec();
 
-    // M.resetState();
-    // M.reverseRun();
-    // M.result();
+    M.resetState();
+    M.reverseRun();
+    M.result();
+    M.sanityCheckStableMatching();
 
     // vector<vector<int> > uniqueMatches = M.reverseRunCountUniquePartners();
     // cout << endl << "Unique matching pairs (core):" << endl;
