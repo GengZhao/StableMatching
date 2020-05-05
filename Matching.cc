@@ -30,6 +30,7 @@ Matching::Matching(
     numProposalsMadeByPropTier(nTiersProp, 0),
     numMatchesByPropTier(nTiersProp, 0),
     numMatchesByRecTier(nTiersRec, 0),
+    preferencesCompleted(false),
     pregeneratePreferences(pregeneratePreferences),
     savePreferences(savePreferences),
     recordingProposalCounts(true),
@@ -125,9 +126,8 @@ bool Matching::runFromCurrent()
             while (true) {
                 Agent* receiver = proposer->propose(this->agentsRec, this->rng);
                 if (receiver) { // && !receiver->isOptimal()) {
-                    Agent* rejected = receiver->handleProposal(proposer, this->rng, true);
-                    if (rejected == proposer) { // failed proposal
-                        receiver->reject(proposer);
+                    if (!receiver->prefer(proposer, this->rng)) { // failed proposal
+                        receiver->handleProposal(proposer, this->rng);
                         continue;
                     }
                     if (rejectionChain.contains(receiver)) {
@@ -144,19 +144,19 @@ bool Matching::runFromCurrent()
                         nextInChain->matchWith(nextNextInChain); // hack since we mis-rejected this agent in handling the proposal above
                         return true;
                     }
-                    receiver->handleProposal(proposer, this->rng); // actually run the proposal
+                    Agent* rejected = receiver->handleProposal(proposer, this->rng); // actually run the proposal
                     rejectionChain.add(receiver, rejected);
                     break;
                 } else {
                     // proposed to someone already at optimum
                     // => cannot find a new stable matching
                     this->stashPopAll(); // restore previous matching
-                    suboptimalReceiver->markOptimal();
-                    this->suboptimalReceivers.erase(suboptimalReceiver);
-                    // for (vector<RejectionChainEntry>::iterator it = rejectionChain.begin(); it != rejectionChain.end(); ++it) {
-                        // it->fromRejecter->markOptimal();
-                        // this->suboptimalReceivers.erase(it->fromRejecter);
-                    // }
+                    // suboptimalReceiver->markOptimal();
+                    // this->suboptimalReceivers.erase(suboptimalReceiver);
+                    for (vector<RejectionChainEntry>::iterator it = rejectionChain.begin(); it != rejectionChain.end(); ++it) {
+                        it->fromRejecter->markOptimal();
+                        this->suboptimalReceivers.erase(it->fromRejecter);
+                    }
                     rejectionChain.clear();
                     break;
                 }
@@ -302,6 +302,15 @@ void Matching::stashPopAll()
 {
     for (Agent* p : this->agentsProp) p->stashPop();
     for (Agent* r : this->agentsRec) r->stashPop();
+}
+
+void Matching::completePreferences()
+{
+    if (this->preferencesCompleted) return;
+    assert(this->agentsToPropose.empty());
+    assert(this->savePreferences);
+    for (Agent* p : this->agentsProp) p->completePreferences();
+    for (Agent* r : this->agentsRec) r->completePreferences();
 }
 
 void Matching::resetState()
@@ -469,5 +478,24 @@ void Matching::result()
 
     cout << endl << "Avg rank of match by receiver tier:" << endl;
     printVectorTsv(this->avgRankForReceiverByTier());
+}
+
+void Matching::printAgentsPreferences(ostream& os)
+{
+    for (Agent* p : this->agentsProp) p->printPreferences(os);
+    for (Agent* r : this->agentsRec) r->printPreferences(os);
+}
+
+void Matching::sanityCheckStableMatching()
+{
+    for (Agent* p : this->agentsProp) {
+        for (Agent* r : this->agentsRec) {
+            if (p->matchedPartner() == r) {
+                if (r->matchedPartner() != p) cerr << "[ERROR] Mismatch (P-R): " << p->index << "-" << r->index << endl;
+            } else {
+                if (p->prefer(r, this->rng) && r->prefer(p, this->rng)) cerr << "[ERROR] Blocking pair (P-R): " << p->index << "-" << r->index << endl;
+            }
+        }
+    }
 }
 

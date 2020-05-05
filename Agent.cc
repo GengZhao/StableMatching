@@ -124,6 +124,7 @@ void Agent::stashPop()
     this->curPartner = this->stashedPartners.back();
     this->invHappiness = this->invHappinessForPartners[this->curPartner->index];
     this->stashedPartners.pop_back();
+    this->poolSize += this->proposalsMade.size() - this->stashedProposalsMade.size(); // TODO: ignore poolSize with pregenerated preferences
     this->proposalsMade = this->stashedProposalsMade;
 }
 
@@ -199,21 +200,30 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
     return agentToProposeTo;
 }
 
-Agent* Agent::handleProposal(Agent* proposer, mt19937& rng, const bool dryrun)
+double Agent::invHappinessFor(Agent* potentialMatch, mt19937& rng)
 {
-    if (!dryrun) this->poolSizesByTier[proposer->tier]--;
+    // TODO: when not saving preferences?
+    if (this->invHappinessForPartners.count(potentialMatch->index) > 0) return this->invHappinessForPartners[potentialMatch->index];
+    exponential_distribution<double> distribution(potentialMatch->score);
+    double invHappinessNew = distribution(rng);
+    if (this->savePreferences) this->invHappinessForPartners[potentialMatch->index] = invHappinessNew;
+    return invHappinessNew;
+}
 
-    double invHappinessNew;
-    if (this->invHappinessForPartners.count(proposer->index)) {
-        invHappinessNew = this->invHappinessForPartners[proposer->index];
-    } else {
-        exponential_distribution<double> distribution(proposer->score);
-        invHappinessNew = distribution(rng);
-        if (this->savePreferences) this->invHappinessForPartners[proposer->index] = invHappinessNew;
-    }
 
+bool Agent::prefer(Agent* potentialMatch, mt19937& rng)
+{
+    assert(this->pregeneratePreferences && this->savePreferences);
+    double invHappinessNew = invHappinessFor(potentialMatch, rng);
+    return invHappinessNew < this->invHappinessForPartners[this->curPartner->index];
+}
+
+Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)
+{
+    this->poolSizesByTier[proposer->tier]--;
+
+    double invHappinessNew = invHappinessFor(proposer, rng);
     if (invHappinessNew < this->invHappiness) {
-        if (dryrun) return this->curPartner;
         Agent* toReject = this->rejectMatched();
         this->invHappiness = invHappinessNew;
         if (this->verbose) cout << "Acceptance: (R)" << this->index << " - (P)" << proposer->index << endl;
@@ -221,7 +231,6 @@ Agent* Agent::handleProposal(Agent* proposer, mt19937& rng, const bool dryrun)
         proposer->matchWith(this);
         return toReject;
     }
-    if (dryrun) return proposer;
     this->reject(proposer);
     return proposer;
 }
@@ -297,3 +306,14 @@ int Agent::rankOfPartnerForReceiver(mt19937& rng)
     this->simulatedRankOfPartner = rank;
     return rank;
 }
+
+void Agent::printPreferences(ostream& os)
+{
+    assert(this->preferencesCompleted);
+    os << "(" << (this->role == PROPOSER ? "P" : "R") << ")" << this->index;
+    for (const PreferenceEntry& pe : this->preferences) {
+        os << "," << pe.index << "-" << this->invHappinessForPartners[pe.index];
+    }
+    os << endl;
+}
+

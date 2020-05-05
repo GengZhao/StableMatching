@@ -69,7 +69,9 @@ class Agent
         );
         ~Agent() {};
         Agent* propose(std::vector<Agent*>& fullPool, std::mt19937& rng);
-        Agent* handleProposal(Agent*, std::mt19937& rng, const bool dryrun=false); // returns the rejected agent
+        double invHappinessFor(Agent*, std::mt19937& rng);
+        bool prefer(Agent*, std::mt19937& rng);
+        Agent* handleProposal(Agent*, std::mt19937& rng); // returns the rejected agent
         void reject(Agent*);
         Agent* rejectMatched();
         void matchWith(Agent*);
@@ -88,6 +90,7 @@ class Agent
         int rankOfPartnerForProposer(); // only for proposers
         int rankOfPartnerForReceiver(std::mt19937& rng); // only for receivers, supplying the proposers vector just for convenience
         int numProposalsReceived(); // only for receivers
+        void printPreferences(std::ostream& os=std::cout);
 };
 
 #endif

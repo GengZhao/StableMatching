@@ -70,6 +70,7 @@ class Matching
         std::vector<int> numMatchesByPropTier;
         std::vector<int> numMatchesByRecTier;
 
+        bool preferencesCompleted;
         const bool pregeneratePreferences; // for long running proposing chain
         const bool savePreferences; // for generating full preferences. This ensures consistency
 
@@ -98,6 +99,7 @@ class Matching
         bool runFromCurrent();
         void reverseRun();
         void resetState(); // will preserve agents' generated preferences
+        void completePreferences();
         void runExperimental();
         std::vector<double> avgRankForProposerByTier(); // only counting matched proposers
         std::vector<double> avgRankForReceiverByTier(); // only counting matched receivers (simulated)
@@ -106,6 +108,8 @@ class Matching
         void result();
         void printRanksRec(std::ostream& os=std::cout);
         void printNProposalsRec(std::ostream& os=std::cout);
+        void printAgentsPreferences(std::ostream& os=std::cout);
+        void sanityCheckStableMatching();
 };
 
 #endif
