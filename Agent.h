@@ -70,7 +70,7 @@ class Agent
         ~Agent() {};
         Agent* propose(std::vector<Agent*>& fullPool, std::mt19937& rng);
         double invHappinessFor(Agent*, std::mt19937& rng);
-        bool prefer(Agent*, std::mt19937& rng);
+        bool prefer(Agent*, std::mt19937& rng, const bool useStash=false);
         Agent* handleProposal(Agent*, std::mt19937& rng); // returns the rejected agent
         void reject(Agent*);
         Agent* rejectMatched();

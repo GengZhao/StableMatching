@@ -111,6 +111,7 @@ bool Matching::runFromCurrent()
 {
     assert(this->pregeneratePreferences && this->savePreferences);
     this->recordingProposalCounts = false;
+    this->completePreferences();
 
     RejectionChain rejectionChain; // TODO: preserve and reuse this
     while (!(this->suboptimalReceivers.empty())) {
@@ -125,8 +126,8 @@ bool Matching::runFromCurrent()
             Agent* proposer = rejectionChain.nextProposer();
             while (true) {
                 Agent* receiver = proposer->propose(this->agentsRec, this->rng);
-                if (receiver) { // && !receiver->isOptimal()) {
-                    if (!receiver->prefer(proposer, this->rng)) { // failed proposal
+                if (receiver && !receiver->isOptimal()) {
+                    if (!receiver->prefer(proposer, this->rng, true)) { // failed proposal
                         receiver->handleProposal(proposer, this->rng);
                         continue;
                     }
@@ -151,8 +152,6 @@ bool Matching::runFromCurrent()
                     // proposed to someone already at optimum
                     // => cannot find a new stable matching
                     this->stashPopAll(); // restore previous matching
-                    // suboptimalReceiver->markOptimal();
-                    // this->suboptimalReceivers.erase(suboptimalReceiver);
                     for (vector<RejectionChainEntry>::iterator it = rejectionChain.begin(); it != rejectionChain.end(); ++it) {
                         it->fromRejecter->markOptimal();
                         this->suboptimalReceivers.erase(it->fromRejecter);
@@ -162,32 +161,6 @@ bool Matching::runFromCurrent()
                 }
             }
         }
-
-        /*
-        this->agentsToPropose.push(rejected);
-
-        while (!(this->agentsToPropose.empty())) {
-            Agent* proposer = this->agentsToPropose.front();
-            this->agentsToPropose.pop();
-            Agent* receiver = proposer->propose(this->agentsRec, this->rng);
-            if (receiver && !receiver->isOptimal()) {
-                Agent* rejected = receiver->handleProposal(proposer, this->rng);
-                if (rejected) { // including when proposer is worse than the previous match for the initial suboptimalReceiver
-                    this->agentsToPropose.push(rejected);
-                } else {
-                    // the initial suboptimalReceiver finds a better match, i.e. rejection chain complete
-                    // => a new stable matching
-                    return true;
-                }
-            } else {
-                // proposed to someone already at optimum
-                // => cannot find a new stable matching
-                this->stashPopAll(); // restore previous matching
-                suboptimalReceiver->markOptimal();
-                this->suboptimalReceivers.pop();
-            }
-        }
-        */
     }
     return false;
 }

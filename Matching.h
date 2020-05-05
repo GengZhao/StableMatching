@@ -62,7 +62,6 @@ class Matching
 
         std::queue<Agent*> agentsToPropose;
         std::set<Agent*> suboptimalReceivers; // initialized after the first stable matching is found
-        // RejectionChain rejectionChain;
 
         std::vector<std::vector<int> > proposalCountMatrix;
         std::vector<std::vector<int> > matchCountMatrix;

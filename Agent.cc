@@ -210,12 +210,13 @@ double Agent::invHappinessFor(Agent* potentialMatch, mt19937& rng)
     return invHappinessNew;
 }
 
-
-bool Agent::prefer(Agent* potentialMatch, mt19937& rng)
+bool Agent::prefer(Agent* potentialMatch, mt19937& rng, const bool useStash)
 {
-    assert(this->pregeneratePreferences && this->savePreferences);
+    assert(this->pregeneratePreferences && this->savePreferences); // TODO: this should not be necessary
     double invHappinessNew = invHappinessFor(potentialMatch, rng);
-    return invHappinessNew < this->invHappinessForPartners[this->curPartner->index];
+    if (this->verbose && useStash)
+        cout << "[Test preference] stashed happiness: " << this->invHappinessForPartners[this->stashedPartners.back()->index] << " - Tested happiness: " << invHappinessNew << endl;
+    return invHappinessNew < (useStash ? this->invHappinessForPartners[this->stashedPartners.back()->index] : this->invHappinessForPartners[this->curPartner->index]);
 }
 
 Agent* Agent::handleProposal(Agent* proposer, mt19937& rng)

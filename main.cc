@@ -9,10 +9,10 @@ using namespace std;
 
 int main()
 {
-    vector<int> tierSizesProp{100};
-    vector<int> tierSizesRec{100};
-    vector<double> scoresProp{1.0};
-    vector<double> scoresRec{1.0};
+    vector<int> tierSizesProp{100, 100};
+    vector<int> tierSizesRec{100, 100};
+    vector<double> scoresProp{2.0, 1.0};
+    vector<double> scoresRec{3.0, 1.0};
 
     // printVectorTsv(tierSizesProp, cout);
     // printVectorTsv(tierSizesRec, cout);
@@ -24,7 +24,7 @@ int main()
         // M.run();
         // cout << M.totalNumProposals << endl;
     // }
-    Matching M(1, 1, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true, true);
+    Matching M(2, 2, tierSizesProp, tierSizesRec, scoresProp, scoresRec, true, true);
 
     // M.runExperimental();
     // M.result();
@@ -33,18 +33,18 @@ int main()
     M.run();
     M.result();
 
-    M.sanityCheckStableMatching();
+    // M.sanityCheckStableMatching(); // current only usable when preferences are complete
 
-    M.completePreferences();
-    M.printAgentsPreferences();
+    // M.completePreferences(); // only when saving preferences
+    // M.printAgentsPreferences();
 
     int nMatchings = 1;
     while (M.runFromCurrent()) {
         nMatchings++;
-        cout << nMatchings << endl;
         M.sanityCheckStableMatching();
         M.result();
     }
+    cout << nMatchings << endl;
     // M.printNProposalsRec();
     // M.printRanksRec();
 
