@@ -65,7 +65,26 @@ def readMatchingStatisticsFromFile(inFile, nSeries=1):
 
         nIters = int(next(inFile))
         for s in range(nSeries):
-            matchingStatistics[s].append([int(next(inFile)) for i in range(nIters)])
+            matchingStatistics[s].append([float(next(inFile)) for i in range(nIters)])
+
+    return [matchingConfigs] + matchingStatistics
+
+def readMatchingPerAgentStatisticsFromFile(inFile, nSeries=1):
+    matchingConfigs = []
+    matchingStatistics = [{'proposers': [], 'receivers': []} for _ in range(nSeries)]
+    for l in inFile:
+        nTiersProp = int(l)
+        tierSizesProp = [int(next(inFile)) for tr in range(nTiersProp)]
+        scoresProp = [float(next(inFile)) for tr in range(nTiersProp)]
+        nTiersRec = int(next(inFile))
+        tierSizesRec = [int(next(inFile)) for tr in range(nTiersRec)]
+        scoresRec = [float(next(inFile)) for tr in range(nTiersRec)]
+        matchingConfigs.append(MatchingConfig(nTiersProp, nTiersRec, tierSizesProp, tierSizesRec, scoresProp, scoresRec))
+
+        _nIters = int(next(inFile)) # TODO: nIters is now assumed to be 1 (since we do per agent statistics)
+        for s in range(nSeries):
+            matchingStatistics[s]['proposers'].append([[float(next(inFile)) for i in range(tierSize)] for tierSize in tierSizesProp])
+            matchingStatistics[s]['receivers'].append([[float(next(inFile)) for i in range(tierSize)] for tierSize in tierSizesRec])
 
     return [matchingConfigs] + matchingStatistics
 
