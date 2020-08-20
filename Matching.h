@@ -108,6 +108,7 @@ class Matching
         void printRanksRec(std::ostream& os=std::cout);
         void printNProposalsRec(std::ostream& os=std::cout);
         void printAgentsPreferences(std::ostream& os=std::cout);
+        void sanityCheckMatchingWithStabilityCriterion(std::function<bool(Agent*, Agent*)>);
         void sanityCheckStableMatching();
 };
 

@@ -99,6 +99,7 @@ void Matching::run()
 
     for (Agent* r : this->agentsRec) {
         if (!r->matchedPartner()) {
+            if (this->verbose) cout << "[Optimal] Receiver: " << r->index << endl;
             r->markOptimal(); // these will never be matched (ref. rural hospital)
         } else {
             this->suboptimalReceivers.insert(r);
@@ -126,7 +127,7 @@ bool Matching::runFromCurrent()
             Agent* proposer = rejectionChain.nextProposer();
             while (true) {
                 Agent* receiver = proposer->propose(this->agentsRec, this->rng);
-                if (receiver && !receiver->isOptimal()) {
+                if (receiver) {
                     if (!receiver->prefer(proposer, this->rng, true)) { // failed proposal
                         receiver->handleProposal(proposer, this->rng);
                         continue;
@@ -149,10 +150,11 @@ bool Matching::runFromCurrent()
                     rejectionChain.add(receiver, rejected);
                     break;
                 } else {
-                    // proposed to someone already at optimum
+                    // no one to propose to
                     // => cannot find a new stable matching
                     this->stashPopAll(); // restore previous matching
                     for (vector<RejectionChainEntry>::iterator it = rejectionChain.begin(); it != rejectionChain.end(); ++it) {
+                        if (this->verbose) cout << "[Optimal] Receiver: " << it->fromRejecter->index << endl;
                         it->fromRejecter->markOptimal();
                         this->suboptimalReceivers.erase(it->fromRejecter);
                     }
@@ -459,16 +461,25 @@ void Matching::printAgentsPreferences(ostream& os)
     for (Agent* r : this->agentsRec) r->printPreferences(os);
 }
 
-void Matching::sanityCheckStableMatching()
+void Matching::sanityCheckMatchingWithStabilityCriterion(function<bool(Agent*, Agent*)> considerStable)
 {
     for (Agent* p : this->agentsProp) {
         for (Agent* r : this->agentsRec) {
             if (p->matchedPartner() == r) {
                 if (r->matchedPartner() != p) cerr << "[ERROR] Mismatch (P-R): " << p->index << "-" << r->index << endl;
             } else {
-                if (p->prefer(r, this->rng) && r->prefer(p, this->rng)) cerr << "[ERROR] Blocking pair (P-R): " << p->index << "-" << r->index << endl;
+                if (considerStable(p, r)) cerr << "[ERROR] Blocking pair (P-R): " << p->index << "-" << r->index << endl;
             }
         }
     }
+}
+
+void Matching::sanityCheckStableMatching()
+{
+    this->sanityCheckMatchingWithStabilityCriterion(
+            [this](Agent* p, Agent* r) -> bool {
+                return p->prefer(r, this->rng) && r->prefer(p, this->rng);
+            }
+        );
 }
 
