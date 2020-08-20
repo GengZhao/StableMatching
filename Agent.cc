@@ -59,7 +59,7 @@ Agent::Agent(
                         pindex++;
                     }
                 }
-                sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) { return p1.invHappiness < p2.invHappiness; });
+                sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) -> bool { return p1.invHappiness < p2.invHappiness; });
                 break;
             case RECEIVER:
                 for (int t = 0; t < partnerSideNTiers; t++) {
@@ -104,7 +104,7 @@ void Agent::completePreferences()
                     pindex++;
                 }
             }
-            sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) { return p1.invHappiness < p2.invHappiness; });
+            sort(this->preferences.begin(), this->preferences.end(), [](PreferenceEntry p1, PreferenceEntry p2) -> bool { return p1.invHappiness < p2.invHappiness; });
             break;
     }
     this->preferencesCompleted = true;
@@ -177,7 +177,7 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
             double sumScoreInTier = this->poolSizesByTier[t] * this->partnerSideScores[t];
             if (randPositionInPool - baseScore < sumScoreInTier) {
                 indexToProposeTo = baseIndex + int((randPositionInPool - baseScore) / this->partnerSideScores[t]);
-                sort(this->proposalsMade.begin(), this->proposalsMade.end(), [](Agent* p1, Agent* p2) { return p1->index < p2->index; });
+                sort(this->proposalsMade.begin(), this->proposalsMade.end(), [](Agent* p1, Agent* p2) -> bool { return p1->index < p2->index; });
                 // consider the agents already proposed to
                 for (Agent* proposedAgent : this->proposalsMade) {
                     if (proposedAgent->index <= indexToProposeTo) indexToProposeTo++;
