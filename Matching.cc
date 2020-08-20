@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <vector>
 #include <queue>
 #include <cassert>
@@ -303,6 +304,16 @@ void Matching::resetState()
     this->totalNumProposals = 0;
 }
 
+/* Only works for balanced markets! */
+void Matching::matchByPermutation(vector<int>& permutationOfReceiverIndices)
+{
+    for (int pindex = 0; pindex < this->nAgentsProp; pindex++) {
+        if (permutationOfReceiverIndices[pindex] == this->agentsProp[pindex]->matchedPartner()->index) continue;
+        this->agentsProp[pindex]->matchWith(this->agentsRec[permutationOfReceiverIndices[pindex]]);
+        this->agentsRec[permutationOfReceiverIndices[pindex]]->matchWith(this->agentsProp[pindex]);
+    }
+}
+
 /** Result computation **/
 
 vector<double> Matching::avgRankForProposerByTier()
@@ -461,25 +472,28 @@ void Matching::printAgentsPreferences(ostream& os)
     for (Agent* r : this->agentsRec) r->printPreferences(os);
 }
 
-void Matching::sanityCheckMatchingWithStabilityCriterion(function<bool(Agent*, Agent*)> considerStable)
+string Matching::sanityCheckMatchingWithStabilityCriterion(function<bool(Agent*, Agent*, mt19937&)> considerStable)
 {
+    ostringstream sstream;
     for (Agent* p : this->agentsProp) {
         for (Agent* r : this->agentsRec) {
             if (p->matchedPartner() == r) {
-                if (r->matchedPartner() != p) cerr << "[ERROR] Mismatch (P-R): " << p->index << "-" << r->index << endl;
+                if (r->matchedPartner() != p) sstream << "[ERROR] Mismatch (P-R): " << p->index << "-" << r->index << "\n";
             } else {
-                if (considerStable(p, r)) cerr << "[ERROR] Blocking pair (P-R): " << p->index << "-" << r->index << endl;
+                if (considerStable(p, r, this->rng)) sstream << "[ERROR] Blocking pair (P-R): " << p->index << "-" << r->index << "\n";
             }
         }
     }
+    return sstream.str();
 }
 
 void Matching::sanityCheckStableMatching()
 {
-    this->sanityCheckMatchingWithStabilityCriterion(
-            [this](Agent* p, Agent* r) -> bool {
-                return p->prefer(r, this->rng) && r->prefer(p, this->rng);
+    string error = this->sanityCheckMatchingWithStabilityCriterion(
+            [](Agent* p, Agent* r, mt19937& rng) -> bool {
+                return p->prefer(r, rng) && r->prefer(p, rng);
             }
         );
+    if (!error.empty()) cerr << error << endl;
 }
 

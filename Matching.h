@@ -100,6 +100,7 @@ class Matching
         void resetState(); // will preserve agents' generated preferences
         void completePreferences();
         void runExperimental();
+        void matchByPermutation(std::vector<int>& permutationOfReceiverIndices);
         std::vector<double> avgRankForProposerByTier(); // only counting matched proposers
         std::vector<double> avgRankForReceiverByTier(); // only counting matched receivers (simulated)
         std::vector<std::vector<int> > reverseRunCountUniquePartners();
@@ -108,7 +109,7 @@ class Matching
         void printRanksRec(std::ostream& os=std::cout);
         void printNProposalsRec(std::ostream& os=std::cout);
         void printAgentsPreferences(std::ostream& os=std::cout);
-        void sanityCheckMatchingWithStabilityCriterion(std::function<bool(Agent*, Agent*)>);
+        std::string sanityCheckMatchingWithStabilityCriterion(std::function<bool(Agent*, Agent*, std::mt19937&)>);
         void sanityCheckStableMatching();
 };
 

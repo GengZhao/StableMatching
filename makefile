@@ -2,15 +2,21 @@ CXX=g++
 OPTFLAG=-O3
 CXXFLAGS=-Wall -g $(OPTFLAG) -std=c++11
 
-EXECUTABLES=main growingMarketLin growingMarketLog varyingTier varyingTierBothParams uniquePartnerCount imbalancedMarket almostBalancedMarket distributionOfPairs
+EXECUTABLES=main almostBalancedMarket distributionOfPairs epsilonStability growingMarketLin growingMarketLog imbalancedMarket uniquePartnerCount varyingTier varyingTierBothParams
 
 all: $(EXECUTABLES)
 
 main: main.o Matching.o Agent.o utils.o
 	$(CXX) $(CXXFLAGS) -o main main.o Matching.o Agent.o utils.o
 
+almostBalancedMarket: almostBalancedMarket.o Matching.o Agent.o utils.o
+	$(CXX) $(CXXFLAGS) -pthread -o almostBalancedMarket almostBalancedMarket.o Matching.o Agent.o utils.o
+
 distributionOfPairs: distributionOfPairs.o Matching.o Agent.o utils.o
 	$(CXX) $(CXXFLAGS) -pthread -o distributionOfPairs distributionOfPairs.o Matching.o Agent.o utils.o
+
+epsilonStability: epsilonStability.o Matching.o Agent.o utils.o
+	$(CXX) $(CXXFLAGS) -pthread -o epsilonStability epsilonStability.o Matching.o Agent.o utils.o
 
 growingMarketLin: growingMarketLin.o Matching.o Agent.o utils.o
 	$(CXX) $(CXXFLAGS) -pthread -o growingMarketLin growingMarketLin.o Matching.o Agent.o utils.o
@@ -20,9 +26,6 @@ growingMarketLog: growingMarketLog.o Matching.o Agent.o utils.o
 
 imbalancedMarket: imbalancedMarket.o Matching.o Agent.o utils.o
 	$(CXX) $(CXXFLAGS) -pthread -o imbalancedMarket imbalancedMarket.o Matching.o Agent.o utils.o
-
-almostBalancedMarket: almostBalancedMarket.o Matching.o Agent.o utils.o
-	$(CXX) $(CXXFLAGS) -pthread -o almostBalancedMarket almostBalancedMarket.o Matching.o Agent.o utils.o
 
 uniquePartnerCount: uniquePartnerCount.o Matching.o Agent.o utils.o
 	$(CXX) $(CXXFLAGS) -pthread -o uniquePartnerCount uniquePartnerCount.o Matching.o Agent.o utils.o
@@ -36,8 +39,14 @@ varyingTierBothParams: varyingTierBothParams.o Matching.o Agent.o utils.o
 main.o: main.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c main.cc
 
+almostBalancedMarket.o: almostBalancedMarket.cc Matching.h Agent.h utils.h
+	$(CXX) $(CXXFLAGS) -c almostBalancedMarket.cc
+
 distributionOfPairs.o: distributionOfPairs.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c distributionOfPairs.cc
+
+epsilonStability.o: epsilonStability.cc Matching.h Agent.h utils.h
+	$(CXX) $(CXXFLAGS) -c epsilonStability.cc
 
 growingMarketLin.o: growingMarketLin.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c growingMarketLin.cc
@@ -47,9 +56,6 @@ growingMarketLog.o: growingMarketLog.cc Matching.h Agent.h utils.h
 
 imbalancedMarket.o: imbalancedMarket.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c imbalancedMarket.cc
-
-almostBalancedMarket.o: almostBalancedMarket.cc Matching.h Agent.h utils.h
-	$(CXX) $(CXXFLAGS) -c almostBalancedMarket.cc
 
 varyingTier.o: varyingTier.cc Matching.h Agent.h utils.h
 	$(CXX) $(CXXFLAGS) -c varyingTier.cc
