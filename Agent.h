@@ -90,6 +90,7 @@ class Agent
         int rankOfPartnerForAgent(std::mt19937& rng);
         int rankOfPartnerForProposer(); // only for proposers
         int rankOfPartnerForReceiver(std::mt19937& rng); // only for receivers
+        double scoreFor(double); // temp
         double invHappinessOfAgent() const;
         int numProposalsReceived() const; // only for receivers
         void printPreferences(std::ostream& os=std::cout) const;

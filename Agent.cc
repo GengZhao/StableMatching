@@ -33,7 +33,7 @@ Agent::Agent(
     role(role), roleReversed(false),
     pregeneratePreferences(pregeneratePreferences), savePreferences(savePreferences),
     sumScoresForPool(inner_product(partnerSideTierSizes.begin(), partnerSideTierSizes.end(),
-                partnerSideScores.begin(), 0.0)),
+                partnerSideScores.begin(), 0.0, plus<double>{}, [this](double sz, double sc){ return sz * this->scoreFor(sc); })),
     poolSize(partnerSideNAgents),
     curPartner(NULL),
     poolSizesByTier(partnerSideTierSizes),
@@ -52,7 +52,7 @@ Agent::Agent(
         {
             case PROPOSER:
                 for (int t = 0; t < partnerSideNTiers; t++) {
-                    exponential_distribution<double> distribution(partnerSideScores[t]);
+                    exponential_distribution<double> distribution(this->scoreFor(partnerSideScores[t]));
                     for (int i = 0; i < partnerSideTierSizes[t]; i++) {
                         PreferenceEntry pe { pindex, distribution(generator) };
                         this->preferences.push_back(pe);
@@ -63,7 +63,7 @@ Agent::Agent(
                 break;
             case RECEIVER:
                 for (int t = 0; t < partnerSideNTiers; t++) {
-                    exponential_distribution<double> distribution(partnerSideScores[t]);
+                    exponential_distribution<double> distribution(this->scoreFor(partnerSideScores[t]));
                     for (int i = 0; i < partnerSideTierSizes[t]; i++) {
                         this->invHappinessForPartners[pindex] = distribution(generator);
                         pindex++;
@@ -91,7 +91,7 @@ void Agent::completePreferences()
             default_random_engine generator{rd()};
             int pindex = 0;
             for (int t = 0; t < this->partnerSideNTiers; t++) {
-                exponential_distribution<double> distribution(partnerSideScores[t]);
+                exponential_distribution<double> distribution(this->scoreFor(partnerSideScores[t]));
                 for (int i = 0; i < this->partnerSideTierSizes[t]; i++) {
                     map<int, double>::iterator it = this->invHappinessForPartners.find(pindex);
                     if (it == this->invHappinessForPartners.end()) {
@@ -151,7 +151,7 @@ void Agent::reset()
     this->proposalsMade.clear();
     this->poolSizesByTier = this->partnerSideTierSizes;
     this->sumScoresForPool = inner_product(this->partnerSideTierSizes.begin(), this->partnerSideTierSizes.end(),
-                this->partnerSideScores.begin(), 0.0);
+                this->partnerSideScores.begin(), 0.0, plus<double>{}, [this](double sz, double sc){ return sz * this->scoreFor(sc); });
     this->poolSize = this->partnerSideNAgents;
     this->invHappiness = numeric_limits<double>::max();
     this->simulatedRankOfPartner = 0;
@@ -174,9 +174,9 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
         double baseScore = 0.0;
         int baseIndex = 0; // excluding already proposed
         for (int t = 0; t < this->partnerSideNTiers; t++) {
-            double sumScoreInTier = this->poolSizesByTier[t] * this->partnerSideScores[t];
+            double sumScoreInTier = this->poolSizesByTier[t] * this->scoreFor(this->partnerSideScores[t]);
             if (randPositionInPool - baseScore < sumScoreInTier) {
-                indexToProposeTo = baseIndex + int((randPositionInPool - baseScore) / this->partnerSideScores[t]);
+                indexToProposeTo = baseIndex + int((randPositionInPool - baseScore) / this->scoreFor(this->partnerSideScores[t]));
                 sort(this->proposalsMade.begin(), this->proposalsMade.end(), [](Agent* p1, Agent* p2) { return p1->index < p2->index; });
                 // consider the agents already proposed to
                 for (Agent* proposedAgent : this->proposalsMade) {
@@ -193,18 +193,23 @@ Agent* Agent::propose(vector<Agent*>& fullPool, mt19937& rng)
     // remove from pool
     this->poolSize--;
     this->poolSizesByTier[agentToProposeTo->tier]--;
-    this->sumScoresForPool -= agentToProposeTo->score;
+    this->sumScoresForPool -= this->scoreFor(agentToProposeTo->score);
     this->proposalsMade.push_back(agentToProposeTo);
 
     if (this->verbose) cout << "Proposal: (P)" << this->index << " - (R)" << agentToProposeTo->index << endl;
     return agentToProposeTo;
 }
 
+double Agent::scoreFor(double score)
+{
+    return (this->score == score) ? 5.0 : 1.0;
+}
+
 double Agent::invHappinessFor(Agent* potentialMatch, mt19937& rng)
 {
     // TODO: when not saving preferences?
     if (this->invHappinessForPartners.count(potentialMatch->index) > 0) return this->invHappinessForPartners[potentialMatch->index];
-    exponential_distribution<double> distribution(potentialMatch->score);
+    exponential_distribution<double> distribution(this->scoreFor(potentialMatch->score));
     double invHappinessNew = distribution(rng);
     if (this->savePreferences) this->invHappinessForPartners[potentialMatch->index] = invHappinessNew;
     return invHappinessNew;
@@ -311,7 +316,7 @@ int Agent::rankOfPartnerForReceiver(mt19937& rng)
     for (int t = 0; t < this->partnerSideNTiers; t++) {
         if (this->poolSizesByTier[t] == 0) continue;
         binomial_distribution<int> distribution(this->poolSizesByTier[t],
-                1 - exp(-this->partnerSideScores[t] * this->invHappiness));
+                1 - exp(-this->scoreFor(this->partnerSideScores[t]) * this->invHappiness));
         rank += distribution(rng);
     }
     this->simulatedRankOfPartner = rank;
